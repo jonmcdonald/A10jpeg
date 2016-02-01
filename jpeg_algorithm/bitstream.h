@@ -64,7 +64,7 @@ class bitstream {
     fwrite(ptr, bytestowrite, 1, fp);
     outputlength += bytestowrite;
 
-      printf("bytestowrite= %d \n",bytestowrite);
+    //  printf("bytestowrite= %d \n",bytestowrite);
     // store output data for Vista model
     for (unsigned char i=0; i<numBytes; i++) {
         jpegResult.write( bytePtr[i] );
