@@ -107,7 +107,7 @@ void driver_pv::thread()
     master_read(JPEG_MEM, rDataByte, outLength); 
 
     // Save jpeg to file in addition to checking result
-    fwrite(rData, 1, outLength, fp);
+    fwrite(rDataByte, 1, outLength, fp);
 
     // check jpeg result against golden data
     for (unsigned i=0; i<outLength; i++) 

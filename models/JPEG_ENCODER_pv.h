@@ -99,7 +99,7 @@ class JPEG_ENCODER_pv : public JPEG_ENCODER_pv_base {
   unsigned              width, height;
   unsigned              numBlocks;
   void thread();
-  bitstream             fp;
+  bitstream             m_bitstream;
 
 };
 

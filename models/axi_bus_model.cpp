@@ -23,7 +23,7 @@
 //* The axi_bus_pv will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 
@@ -91,7 +91,7 @@ axi_bus_pv_base_parameters::axi_bus_pv_base_parameters(sc_object* object) :
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, driver_vmap, ""),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_priority, 0),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_base_address, 0),
-  SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_size, 0x20000000),
+  SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_size, 0x40000000),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_subtract_base_address, 1),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_secure, 0),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, sram_master_additional_ranges, ""),
@@ -558,7 +558,7 @@ void axi_bus_base1_pv::invalidate_direct_mem_ptr(unsigned target_index, sc_dt::u
 //* It contains the machine architecture class for your axi_bus model.
 //* 
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 #include "axi_bus_model.h"
@@ -1050,7 +1050,7 @@ axi_bus_t_base::axi_bus_t_base(sc_module_name& module_name, long simulation,
   SD_INITIALIZE_PARAMETER(driver_vmap, ""),
   SD_INITIALIZE_PARAMETER(sram_master_priority, 0),
   SD_INITIALIZE_PARAMETER(sram_master_base_address, 0),
-  SD_INITIALIZE_PARAMETER(sram_master_size, 0x20000000),
+  SD_INITIALIZE_PARAMETER(sram_master_size, 0x40000000),
   SD_INITIALIZE_PARAMETER(sram_master_subtract_base_address, 1),
   SD_INITIALIZE_PARAMETER(sram_master_secure, 0),
   SD_INITIALIZE_PARAMETER(sram_master_additional_ranges, ""),
@@ -1605,7 +1605,7 @@ void axi_bus_t_base::update_power_parameters(esl::sc_sim::power_policy* handle) 
 //* A synchronization point is reached whenever there is a wait statement on a testbench thread. 
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 #include "axi_bus_model.h"

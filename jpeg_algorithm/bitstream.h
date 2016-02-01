@@ -57,7 +57,10 @@ class bitstream {
       char* bytePtr = (char*)ptr;
       unsigned char numBytes = bytestowrite;
 
-      fwrite(ptr, bytestowrite, 1, fp);
+      #ifdef WRITE_JPEG
+          // Don't write jpeg file here, it is done outside of JPEG model
+          fwrite(ptr, bytestowrite, 1, fp);
+      #endif
       outputlength += bytestowrite;
 
       // store output data for Vista model
@@ -99,8 +102,13 @@ class bitstream {
   void close() {
     fclose(fp);
   }
-  
+ 
+#ifdef WRITE_JPEG
   inline  bitstream(const char * filename) : bytebitcounter(0), outbyte(0), outputlength(0) { fp = fopen(filename, "wb"); }
   inline ~bitstream() { close(); }
+#else
+  inline  bitstream(const char * filename) : bytebitcounter(0), outbyte(0), outputlength(0) { }
+  inline ~bitstream() { }
+#endif
 };
 

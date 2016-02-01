@@ -23,7 +23,7 @@
 //* The sram_pv will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 
@@ -81,7 +81,7 @@ sram_pv_base_parameters::sram_pv_base_parameters(sc_object* object) :
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, slave_outstanding, 1),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, slave_read_data_queue_size, 0),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, slave_write_data_queue_size, 0),
-  SD_INITIALIZE_PARAMETER_EXTERNALLY(object, size_in_bytes, 0x20000000),
+  SD_INITIALIZE_PARAMETER_EXTERNALLY(object, size_in_bytes, 0x40000000),
   SD_INITIALIZE_PARAMETER_EXTERNALLY(object, endianness, "target")
 {
   if(verbose_parameters) print_parameters();
@@ -206,7 +206,7 @@ void sram_base1_pv::do_invalidate_direct_mem_ptr(sc_dt::uint64 start_range, sc_d
 //* It contains the machine architecture class for your sram model.
 //* 
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 #include "sram_model.h"
@@ -338,7 +338,7 @@ void sram_machine_arch::callTransaction(unsigned portIndex, unsigned transaction
 //* The sram_t will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 
@@ -520,7 +520,7 @@ sram_t_base::sram_t_base(sc_module_name& module_name, long simulation) :
   SD_INITIALIZE_PARAMETER(slave_outstanding, 1),
   SD_INITIALIZE_PARAMETER(slave_read_data_queue_size, 0),
   SD_INITIALIZE_PARAMETER(slave_write_data_queue_size, 0),
-  SD_INITIALIZE_PARAMETER(size_in_bytes, 0x20000000),
+  SD_INITIALIZE_PARAMETER(size_in_bytes, 0x40000000),
   SD_INITIALIZE_PARAMETER(endianness, "target"),
   m_simulation(simulation)
 {
@@ -745,7 +745,7 @@ bool sram_t_base::portHasRegisters(unsigned portIndex) {
 //* A synchronization point is reached whenever there is a wait statement on a testbench thread. 
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 #include "sram_model.h"

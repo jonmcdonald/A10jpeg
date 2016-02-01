@@ -30,7 +30,7 @@
 #pragma once
 
 #include "huff.h"
-#include "tables.h"
+//#include "tables.h"
 
 #include "ac_fixed.h"
 #include "ac_channel.h"

@@ -38,7 +38,8 @@ SC_MAIN_FLAGS       =
 PROJECT             = Project      # Vista Project (only used for db: and cleanall:)
 
 UVMC_VER            = 2.3
-    
+   
+USER_CFLAGS         = -Wno-unused-label
 USERSRC_FILES       =   # User Source files
 USERSRC_DIRS        = jpeg_algorithm                   # directories of user source in addition to file paths
 USERINC             = jpeg_algorithm/catapult_include  # User include directories
@@ -58,7 +59,7 @@ QUESTA_SC_WORK_LIB  =  # empty unless QUESTA_BENCH_PWD specified via make comman
 
 ifneq ($(strip $(NO_VIVY)),0)
     # Vista Standalone
-    USER_CFLAGS         = 
+    USER_CFLAGS        += 
     USERSRC_FILES      +=   # User Source files
     USERSRC_DIRS       +=   # directories of user source in addition to file paths
     USERINC            +=   # User include directories
@@ -67,7 +68,7 @@ ifneq ($(strip $(NO_VIVY)),0)
 else 
     ifneq ($(strip $(USE_VISTA_IN_QUESTA)),)
         # For Vista in Questa 
-	USER_CFLAGS         = -DUSE_VISTA_IN_QUESTA=1 
+	USER_CFLAGS        += -DUSE_VISTA_IN_QUESTA=1 
 	SC_MAIN_FLAGS      += -DUVMC_FABRICSERVER_SRC=$(UVMC_FABRICSERVER_SRC:%.cpp=%.h)
         USERSRC_FILES      += $(XL_VIP_HOME)/shared/xl_uvmc/uvmc-$(UVMC_VER)/src/connect/sc/uvmc.cpp $(UVMC_HVL_FILES)
         USERSRC_DIRS       += 
@@ -82,7 +83,7 @@ else
 
     else
         # For Dual process Vista+Questa/Veloce
-        USER_CFLAGS         = -DXL_TLM_REMOTE_CLIENT  # needed for Vivy blocks and sc_main
+        USER_CFLAGS        += -DXL_TLM_REMOTE_CLIENT  # needed for Vivy blocks and sc_main
         USERSRC_FILES      += 
         USERSRC_DIRS       += 
         USERINC            += $(QUESTA_HOME)/include $(XL_VIP_HOME)/shared/xl_uvmc/xl-uvmc-$(UVMC_VER)/src/connect/sc
@@ -424,6 +425,7 @@ clean:
 	rm -f  vsim.wlf transcript vish_stacktrace.vstf vsim_stacktrace.vstf tcl_stacktrace.txt vsim.dbg
 	rm -rf model_builder.ini
 	rm -rf $(WORK_SCCOM) $(WORK_AQL)
+	rm -f  driver_out.jpg
 
 cleanall clean_all: clean
 	rm -rf papoulis_project 

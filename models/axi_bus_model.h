@@ -23,7 +23,7 @@
 //* The axi_bus_pv will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 
@@ -2882,7 +2882,7 @@ private:
 //* It contains the machine architecture class for your axi_bus model.
 //* 
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 
@@ -3072,7 +3072,7 @@ class axi_bus_machine_arch : public MachineArch {
 //* The axi_bus_t will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 
@@ -3335,7 +3335,7 @@ public:
 //* A synchronization point is reached whenever there is a wait statement on a testbench thread. 
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 03:08:49 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:58:30 AM, (user: mbradley)
 //*>
 
 
@@ -3400,7 +3400,7 @@ public:
     driver_vmap = ::mb::sysc::sdInitParameter<const char*>("driver_vmap", "", hier_name);
     sram_master_priority = ::mb::sysc::sdInitParameter<unsigned int>("sram_master_priority", 0, hier_name);
     sram_master_base_address = ::mb::sysc::sdInitParameter<unsigned long long>("sram_master_base_address", 0, hier_name);
-    sram_master_size = ::mb::sysc::sdInitParameter<unsigned long long>("sram_master_size", 0x20000000, hier_name);
+    sram_master_size = ::mb::sysc::sdInitParameter<unsigned long long>("sram_master_size", 0x40000000, hier_name);
     sram_master_subtract_base_address = ::mb::sysc::sdInitParameter<unsigned int>("sram_master_subtract_base_address", 1, hier_name);
     sram_master_secure = ::mb::sysc::sdInitParameter<unsigned int>("sram_master_secure", 0, hier_name);
     sram_master_additional_ranges = ::mb::sysc::sdInitParameter<const char*>("sram_master_additional_ranges", "", hier_name);
@@ -3523,7 +3523,7 @@ public:
     driver_vmap = ::mb::sysc::sdInitParameter<const char*>("driver_vmap", "", hier_name);
     sram_master_priority = ::mb::sysc::sdInitParameter<unsigned int>("sram_master_priority", 0, hier_name);
     sram_master_base_address = ::mb::sysc::sdInitParameter<unsigned long long>("sram_master_base_address", 0, hier_name);
-    sram_master_size = ::mb::sysc::sdInitParameter<unsigned long long>("sram_master_size", 0x20000000, hier_name);
+    sram_master_size = ::mb::sysc::sdInitParameter<unsigned long long>("sram_master_size", 0x40000000, hier_name);
     sram_master_subtract_base_address = ::mb::sysc::sdInitParameter<unsigned int>("sram_master_subtract_base_address", 1, hier_name);
     sram_master_secure = ::mb::sysc::sdInitParameter<unsigned int>("sram_master_secure", 0, hier_name);
     sram_master_additional_ranges = ::mb::sysc::sdInitParameter<const char*>("sram_master_additional_ranges", "", hier_name);

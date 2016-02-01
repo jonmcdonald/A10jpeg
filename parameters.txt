@@ -4,5 +4,3 @@ clock = 1 NS
 
 verbose_parameters = 0
 
-voltage = 0.8
-nominal_voltage = 1

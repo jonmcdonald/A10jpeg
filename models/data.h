@@ -1,5 +1,6 @@
 
 
+// input bmp and output jpeg data for fractal_96x216.bmp
 
 //const unsigned fractal_bmp_data[] = {
 const unsigned bmp_data[] = {

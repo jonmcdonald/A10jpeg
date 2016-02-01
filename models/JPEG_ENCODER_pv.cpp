@@ -37,12 +37,10 @@ JPEG_ENCODER_pv::JPEG_ENCODER_pv(sc_module_name module_name)
   : JPEG_ENCODER_pv_base(module_name) 
    ,mbFifo(1)
    ,jpegRunning(0)
-   ,fp("jpeg_out.jpg")
+   ,m_bitstream("jpeg_out.jpg") // enable jpeg file write in jpeg_algorithm/bitstream.h
 
 {
     SC_THREAD(thread);
-    // Construct a Jpeg output object
-
 } 
 
 // Read callback for status register.
@@ -91,14 +89,14 @@ void JPEG_ENCODER_pv::thread()
         numBlocks       = (width*height+BLOCK_SIZE-1) / BLOCK_SIZE;
         cout << " input_w_h_size= "<<hex<< input_w_h_size <<" width= "<<dec<< width <<" height= "<< height <<endl;
 
-        // write out all the header info for the jpeg
+        // JPEG Preamble
         cout <<" write preamble width= "<< width <<" height= "<< height <<endl;
-        fp.writepreamble(height, width);
+        m_bitstream.writepreamble(height, width);
         
         // DMA Burst out preamble
-        while (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
+        while (m_bitstream.get_resultSize() >= WRITE_BLOCK_SIZE) {
             for (int i=0; i<WRITE_BLOCK_SIZE; i++) {
-                imageWriteData[i] = fp.get_resultByte();
+                imageWriteData[i] = m_bitstream.get_resultByte();
             }
             master_write(dmaWriteAddr , imageWriteData, WRITE_BLOCK_SIZE);
             dmaWriteAddr += WRITE_BLOCK_SIZE;
@@ -107,6 +105,7 @@ void JPEG_ENCODER_pv::thread()
         if (numBlocks != width*height/BLOCK_SIZE)
             cout <<name()<<" @ "<<sc_time_stamp()<<" ERROR: bmp width*height not a multiple of BLOCK_SIZE ("<< BLOCK_SIZE <<")"<<endl;
 
+        // Loop through each input block and process
         for (unsigned block=0; block<numBlocks; block++)
         {
             //cout <<name()<<" @ "<<sc_time_stamp()<<" processing block "<<dec<< block <<endl;
@@ -120,7 +119,7 @@ void JPEG_ENCODER_pv::thread()
                 //printf(",0x00%02X%02X%02X\n",(unsigned)rgb[i].r, (unsigned)rgb[i].g, (unsigned)rgb[i].b);
             }
 
-            // process Y, Cb and Cr blocks, one after the other
+            // process same input data as Y, Cb and Cr blocks, one after the other
             for (int type = 0; type <= 2; type++) 
             {
 
@@ -136,14 +135,14 @@ void JPEG_ENCODER_pv::thread()
             
                 // write out the bitstream
                 for (int k=0; k<64; k++) {
-                    fp.write(codes[k].size, codes[k].code);
+                    m_bitstream.write(codes[k].size, codes[k].code);
                 }
             }
 
             // DMA out data in bursts
-            while (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
+            while (m_bitstream.get_resultSize() >= WRITE_BLOCK_SIZE) {
                 for (int i=0; i<WRITE_BLOCK_SIZE; i++) {
-                    imageWriteData[i] = fp.get_resultByte();
+                    imageWriteData[i] = m_bitstream.get_resultByte();
                     //printf(" %02X",imageWriteData[i]);
                 }
                 master_write(dmaWriteAddr , imageWriteData, WRITE_BLOCK_SIZE);
@@ -151,27 +150,27 @@ void JPEG_ENCODER_pv::thread()
             }
         }
         // write out trailing info for the jpeg
-        fp.writepostscript();
+        m_bitstream.writepostscript();
 
         // probably not a full block available, but check
-        while (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
+        while (m_bitstream.get_resultSize() >= WRITE_BLOCK_SIZE) {
             for (unsigned i=0; i<WRITE_BLOCK_SIZE; i++) {
-                imageWriteData[i] = fp.get_resultByte();
+                imageWriteData[i] = m_bitstream.get_resultByte();
             }    
             master_write(dmaWriteAddr , imageWriteData, WRITE_BLOCK_SIZE);
             dmaWriteAddr += WRITE_BLOCK_SIZE;
         }
 
         // DMA remaining bytes
-        dmaWriteSize = fp.get_resultSize(); 
+        dmaWriteSize = m_bitstream.get_resultSize(); 
         for (unsigned i=0; i<dmaWriteSize; i++) {
-            imageWriteData[i] = fp.get_resultByte();
+            imageWriteData[i] = m_bitstream.get_resultByte();
         }
         master_write(dmaWriteAddr , imageWriteData, dmaWriteSize);
         
         jpegRunning   = 0;
-        outputlength  = fp.get_outputlength();
-        printf("outputlength = %d\n",fp.get_outputlength());
+        outputlength  = m_bitstream.get_outputlength();
+        printf("outputlength = %d\n",m_bitstream.get_outputlength());
         irq.write(1);
         
         mbFifo.get();  // release Fifo, Done.

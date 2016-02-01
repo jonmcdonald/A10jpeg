@@ -23,7 +23,7 @@
 //* The sram_pv will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 
@@ -400,7 +400,7 @@ protected:
 //* It contains the machine architecture class for your sram model.
 //* 
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 
@@ -494,7 +494,7 @@ class sram_machine_arch : public MachineArch {
 //* The sram_t will be derived from this class.
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 
@@ -717,7 +717,7 @@ protected:
 //* A synchronization point is reached whenever there is a wait statement on a testbench thread. 
 //*
 //* Model Builder version: 4.1.0
-//* Generated on: Jan. 27, 2016 04:07:07 PM, (user: mbradley)
+//* Generated on: Feb. 01, 2016 10:45:33 AM, (user: mbradley)
 //*>
 
 
@@ -768,7 +768,7 @@ public:
     slave_outstanding = ::mb::sysc::sdInitParameter<unsigned int>("slave_outstanding", 1, hier_name);
     slave_read_data_queue_size = ::mb::sysc::sdInitParameter<unsigned int>("slave_read_data_queue_size", 0, hier_name);
     slave_write_data_queue_size = ::mb::sysc::sdInitParameter<unsigned int>("slave_write_data_queue_size", 0, hier_name);
-    size_in_bytes = ::mb::sysc::sdInitParameter<unsigned long long>("size_in_bytes", 0x20000000, hier_name);
+    size_in_bytes = ::mb::sysc::sdInitParameter<unsigned long long>("size_in_bytes", 0x40000000, hier_name);
     endianness = ::mb::sysc::sdInitParameter<const char*>("endianness", "target", hier_name);
     ::mb::sysc::sdPropagateParameters();
   }
@@ -839,7 +839,7 @@ public:
     slave_outstanding = ::mb::sysc::sdInitParameter<unsigned int>("slave_outstanding", 1, hier_name);
     slave_read_data_queue_size = ::mb::sysc::sdInitParameter<unsigned int>("slave_read_data_queue_size", 0, hier_name);
     slave_write_data_queue_size = ::mb::sysc::sdInitParameter<unsigned int>("slave_write_data_queue_size", 0, hier_name);
-    size_in_bytes = ::mb::sysc::sdInitParameter<unsigned long long>("size_in_bytes", 0x20000000, hier_name);
+    size_in_bytes = ::mb::sysc::sdInitParameter<unsigned long long>("size_in_bytes", 0x40000000, hier_name);
     endianness = ::mb::sysc::sdInitParameter<const char*>("endianness", "target", hier_name);  
 
     ::mb::sysc::sdPropagateParameters();
