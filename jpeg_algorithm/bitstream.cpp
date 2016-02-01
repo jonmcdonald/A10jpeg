@@ -270,6 +270,8 @@ void bitstream::write_APP0() {
 
 // write a jpeg file upto the actual scan data
 void bitstream::writepreamble(unsigned short height, unsigned short width) {
+   // New image, reset outputlength
+   outputlength = 0;
    write_SOI();
    write_APP0();
    write_DQT();

@@ -87,7 +87,6 @@ class bitstream {
   public:
 
   unsigned      get_outputlength() { return outputlength; }
-
   unsigned      get_resultSize()   { return jpegResult.size(); }
   unsigned char get_resultByte()   { return jpegResult.read(); }
 
