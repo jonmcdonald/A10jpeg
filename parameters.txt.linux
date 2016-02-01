@@ -1,0 +1,131 @@
+clock = 1 NS
+nominal_voltage = 1
+
+tlm_timing_model = LT
+
+voltage = 0.8
+
+#control_page_address = 0x80000000
+#verbose_file = cache.log
+cache_control = software
+pvt_lockstep = SYNC_END
+mb_memory_chunk_size = 0x400000
+echo_mode = 0
+
+verbose_parameters = 0
+
+physical_io_host_time_sync = 0
+#physical_io_polling_period = 100 us
+
+###############################
+##         CPU A9mp 2 Core  ###
+###############################
+# Uncomment this for [Linux+BusyBox+Eth] mode
+top.CPU_Cortex_A9.PV.cpu0.core.elf_image_file = ../sw_linux_bootp/bootp
+
+# Uncomment this for [BareMetal] mode
+#top.CPU_Cortex_A9.PV.cpu0.core.elf_image_file  = sw_baremetal_demo/dual_core_dhry.axf 
+
+#top.CPU_Cortex_A9.PV.cpu0.core.gdbstub_port_spec = AUTO
+#top.CPU_Cortex_A9.PV.cpu1.core.gdbstub_port = 1234
+
+#top.CPU_Cortex_A9.PV.cpu0.core.verbose = WRITE
+#top.CPU_Cortex_A9.PV.cpu1.core.verbose = STATE|IRQ
+
+#top.CPU_Cortex_A9.PV.cpu0.dcache.verbose = MISS
+#top.CPU_Cortex_A9.PV.cpu0.icache.verbose = MISS
+#top.CPU_Cortex_A9.PV.cpu1.dcache.verbose = MISS
+#top.CPU_Cortex_A9.PV.cpu1.icache.verbose = MISS
+
+
+#top.CPU_Cortex_A9.PV.cpu0.core.lt_synch_quantum = 50000 NS
+#top.CPU_Cortex_A9.PV.cpu1.core.lt_synch_quantum = 13 NS
+
+top.CPU_Cortex_A9.PV.periph_clock = 20 NS
+
+dcache_size = 16384
+icache_size = 16384
+
+
+###############################
+## Main AXI Bus             ###
+###############################
+
+top.AXI_BUS.apb_master_base_address             = 0x40000000
+top.AXI_BUS.apb_master_size                     = 0x10000000
+top.AXI_BUS.apb_master_subtract_base_address    = 0x1
+
+top.AXI_BUS.eth_master_base_address             = 0x14005000
+top.AXI_BUS.eth_master_size                     = 0x10
+top.AXI_BUS.eth_master_subtract_base_address    = 0x1
+
+top.AXI_BUS.lcd_master_base_address             = 0x14004000
+top.AXI_BUS.lcd_master_size                     = 0x1000
+top.AXI_BUS.lcd_master_subtract_base_address    = 0x1
+
+top.AXI_BUS.h264_master_base_address            = 0x14003000
+top.AXI_BUS.h264_master_size                    = 0x40
+top.AXI_BUS.h264_master_subtract_base_address   = 0x1
+
+top.AXI_BUS.io_master_base_address              = 0x10000020
+top.AXI_BUS.io_master_size                      = 0x20
+top.AXI_BUS.io_master_subtract_base_address     = 0x1
+
+top.AXI_BUS.jpeg_master_base_address            = 0x10000000
+top.AXI_BUS.jpeg_master_size                    = 0x20
+top.AXI_BUS.jpeg_master_subtract_base_address   = 0x1
+
+top.AXI_BUS.sram_master_base_address            = 0x00000000
+top.AXI_BUS.sram_master_size                    = 0x10000000
+top.AXI_BUS.sram_master_subtract_base_address   = 0x1
+
+###############################
+##          APB             ###
+###############################
+# UART RST_CLOCK_CTRL 
+top.APB_BUS.uart_rst_ctrl_base_address          = 0x00004000
+top.APB_BUS.uart_rst_ctrl_size                  = 0x1000
+top.APB_BUS.uart_rst_ctrl_subtract_base_address = 0x1
+
+# UART Registers
+top.APB_BUS.uart_base_address                   = 0x00002000
+top.APB_BUS.uart_size                           = 0x1000
+top.APB_BUS.uart_subtract_base_address          = 0x1
+
+
+##################################
+##     Memory - SRAM           ###
+##################################
+top.sram.slave_outstanding              = 4
+top.sram.size_in_bytes                  = 0x10000000
+top.sram.slave_read_data_queue_size     = 64
+top.sram.slave_write_data_queue_size    = 64
+
+
+##################################
+##  UART and Virtual Console  ###
+##################################
+# UART FIFO sizes
+top.UART_SYS.UARTV.IP.receive_FIFO_size_in_bytes  = 128
+top.UART_SYS.UARTV.IP.transmit_FIFO_size_in_bytes = 128
+
+# UART Timing parameters 
+top.UART_SYS.UARTV.IP.reset_latency                   = 1
+top.UART_SYS.UARTV.IP.RXData_latency                  = 1
+top.UART_SYS.UARTV.IP.dataRegToFIFO_latency           = 1
+top.UART_SYS.UARTV.IP.FIFOToDataReg_latency           = 1
+top.UART_SYS.UARTV.IP.clear_interrupt_latency         = 1
+top.UART_SYS.UARTV.IP.clear_combinedInterrupt_latency = 1
+
+# Virtual Console
+top.UART_SYS.UARTV.VIS.read_from_console_buffer_size       = 256
+top.UART_SYS.UARTV.VIS.read_from_console_latency           = 1000
+top.UART_SYS.UARTV.VIS.read_from_console_latency_time_unit = NS
+
+
+##########################
+### Virtual Ethernet   ###
+##########################
+vlan:tcp_napt = :2122 => :22 ; :2123 => :23
+vlan:udp_napt = :2169 => :69
+

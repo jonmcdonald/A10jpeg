@@ -1,0 +1,74 @@
+# ============================ TLM Model File ============================
+# You can create tlm model by one of the following ways:
+#   - load this file using 'load_model' API function
+#   - compile this file using "Modeling->Load Model File" menu command.
+# ========================================================================
+template "/TLM/Generic_Library/Bus"
+
+# === ports ===
+add_port "driver" /TLM/protocols/axi slave 32 -bind_mode optional
+add_port "sram_master" /TLM/protocols/axi master 32 -bind_mode optional
+add_port "jpeg_dma" /TLM/protocols/axi slave 32 -bind_mode optional
+add_port "jpeg_regs" /TLM/protocols/axi master 32 -bind_mode optional
+
+# === parameters ===
+# usage: add_parameter <parameter_name> <default_value> <type:string|unsigned|int>
+# example: add_parameter "parameter1" 12 unsigned
+
+# === auto parameters ===
+set_auto_parameter_default "clock" {10 ns} time {}
+set_auto_parameter_default "axi_clock" clock time {}
+set_auto_parameter_default "nominal_voltage" 1 double {}
+set_auto_parameter_default "verbose_parameters" true boolean {true false}
+set_auto_parameter_default "dmi_enabled" true boolean {true false}
+set_auto_parameter_default "warning_level" WARNING string {
+      "IGNORE" "WARNING" "ONCE" "ERROR" "FATAL"}
+set_auto_parameter_default "layers" {""} string {}
+set_auto_parameter_default "slave_sets" {""} string {}
+set_auto_parameter_default "write_broadcast" 0 uint32 {}
+set_auto_parameter_default "driver_priority" 0 uint32 {}
+set_auto_parameter_default "driver_vmap" {""} string {}
+set_auto_parameter_default "sram_master_priority" 0 uint32 {}
+set_auto_parameter_default "sram_master_base_address" 0 uint64 {}
+set_auto_parameter_default "sram_master_size" 0x20000000 uint64 {}
+set_auto_parameter_default "sram_master_subtract_base_address" 1 uint32 {0 1}
+set_auto_parameter_default "sram_master_secure" 0 uint32 {0 1}
+set_auto_parameter_default "sram_master_additional_ranges" {""} string {}
+set_auto_parameter_default "sram_master_latency" 0 uint32 {}
+set_auto_parameter_default "jpeg_dma_priority" 0 uint32 {}
+set_auto_parameter_default "jpeg_dma_vmap" {""} string {}
+set_auto_parameter_default "jpeg_regs_priority" 0 uint32 {}
+set_auto_parameter_default "jpeg_regs_base_address" 0xE0000000 uint64 {}
+set_auto_parameter_default "jpeg_regs_size" 0x100 uint64 {}
+set_auto_parameter_default "jpeg_regs_subtract_base_address" 1 uint32 {0 1}
+set_auto_parameter_default "jpeg_regs_secure" 0 uint32 {0 1}
+set_auto_parameter_default "jpeg_regs_additional_ranges" {""} string {}
+set_auto_parameter_default "jpeg_regs_latency" 0 uint32 {}
+
+# === generics ===
+# usage: add_generic <generic_name> <value>
+# example: add_generic "OUT_ACTIVE_VALUE" false
+
+# === machine architecture ===
+set_sync_all 0
+add_delay_policy driver 0 -latency 0 -sync 1 -power 0
+add_pipeline_policy sram_master driver -latency sram_master_latency -buffer_size 0 -sync 1 -power 0
+add_pipeline_policy jpeg_regs driver -latency jpeg_regs_latency -buffer_size 0 -sync 1 -power 0
+add_delay_policy jpeg_dma 0 -latency 0 -sync 1 -power 0
+add_pipeline_policy sram_master jpeg_dma -latency sram_master_latency -buffer_size 0 -sync 1 -power 0
+add_pipeline_policy jpeg_regs jpeg_dma -latency jpeg_regs_latency -buffer_size 0 -sync 1 -power 0
+
+# === generate options ===
+set_generate_kind "pvt" ;# should be one of: model|pv|pvt
+set_include_file ""
+set_external_pv_include ""
+set_pv_kind "template" ;# should be one of: template|external
+set_timing_kind "policies" ;# should be: policies
+set_power_kind "policies" ;# should be: policies
+set_class_name_external_pv ""
+set_max_parameters_of_pv_constructor 5
+set_overwrite 0
+set_generate_ipxact 0
+set_ipxact_vendor "Mentor.com"
+set_ipxact_version 1.0
+

@@ -1,0 +1,140 @@
+#!/bin/bash
+
+
+################################################################
+#   QuantumSyncIntervalNs  QuantumSyncRatio
+#    (default=0)              (default=1)
+#   -------------------    ----------------
+#       0                      X       PERF_EVENT_MODE (default)  Run Vista until transaction for Questa.  
+#                                                                 Run Questa until event for Vista.
+#
+#      -1                     >0       HIFI_TIMED_MODE            Vista tells Questa next event time.  
+#                                                                 Questa runs to max of Vista event time. 
+#                                                                 Vista then advances to its next event
+#
+#      >0                     >0       QUANT_SYNC_MODE            Like HIFI_TIMED_MODE, but only sync every quantum or an mixed event.
+#                                                                 Quantum/ratio >= Questa clock, or questa not advance enough
+#
+#      >0                      0       QUANT_SYNC_ADAPTIVE_MODE   TBD
+#
+################################################################
+### Select Synchonization 
+################################################################
+
+UVMC_SYNC_ARGS="--quantum-sync-interval=-1   --quantum-sync-ratio=1"    # HIFI_TIMED_MODE
+
+#UVMC_SYNC_ARGS=""                            # PERF_EVENT_MODE
+#UVMC_SYNC_ARGS="--quantum-sync-interval=0"   # PERF_EVENT_MODE
+#UVMC_SYNC_ARGS="--quantum-sync-interval=1 --quantum-sync-ratio=1"   # QUANTUM_SYNC_MODE
+#UVMC_SYNC_ARGS="--quantum-sync-interval=1 --quantum-sync-ratio=0"   # QUANT_SYNC_ADAPTIVE_MODE
+
+################################################################
+usage() { echo "usage: $0 [ options ] <extra_vista_args>"
+          echo "  Default simulation is batch mode"
+          echo "   -b    # Path to Questa TestBench"
+          echo "   -i    # interactive Vista"
+          echo "   -D    # UVMC communication debug"
+          echo "   -k    # execute 'killsim'"
+          echo "   -p    # Path to Vista project (default: location of this script)"
+          echo "   -s    # Sleep seconds before starting Vista"
+          exit; 
+}
+################################################################
+
+# A script is generated to start Vista from the xterm
+runScript=".runVista"
+
+pathVista=$( cd "${0%/*}" && pwd)   # location of this script
+pathBench="."
+extraVistaArgs=""
+interactiveV=""
+debugV=""
+killsim=0
+sleepSec=5
+vistaStart="-gcc45 -sc23"
+
+while [ -n "$1" ] ; do
+    case "$1" in
+        -b)  shift; pathBench="$1"                 ;;
+        -i)  interactiveV="1"                      ;;
+        -D)  debugV='1'                            ;;
+        -k)  killsim="1"                           ;;
+        -s)  shift; sleepSec="$1"                  ;;
+        -p)  shift; pathVista="$1"                 ;;
+        -*) usage                                  ;;
+        *) extraVistaArgs="$extraVistaArgs $1"     ;;
+    esac
+    shift
+done
+
+xterm_pid=$pathBench/.xterm_pid
+
+#echo runScript= $runScript
+#echo pathVista= $pathVista
+#echo pathBench= $pathBench
+#echo extraVistaArgs= $extraVistaArgs
+#echo interactiveV= $interactiveV
+#echo debugV= $debugV
+#echo killsim= $killsim
+#echo sleepSec= $sleepSec
+#######################################################
+
+rcmd() {
+    echo $1
+    eval $1
+
+    # save process id of xterm
+    pid=$!
+    echo $1 | grep -q "xterm" 
+    if [ "$?" == 0 ]; then 
+        echo $pid >> $xterm_pid
+    fi
+}
+
+######################################################
+
+if [ "$killsim" == "1" ]; then
+    echo "Running killsim"
+    if [ -x "killsim" ]; then
+        ./killsim
+    elif [ -x "scripts/killsim" ]; then
+        ./scripts/killsim
+    else
+        echo "problem with killsim.. bye"
+        exit
+    fi
+fi
+
+rm -f $xterm_pid
+
+#######################################################
+
+cd $pathVista
+
+if [ "$debugV" == "1" ]; then
+    export XL_TLM_ENABLE_IPC_SNOOPING=yes
+else
+    unset XL_TLM_ENABLE_IPC_SNOOPING
+fi
+
+#######################################################
+
+if [ "$interactiveV" == "1" ]; then
+    rcmd "start_vista $vistaStart -exec run.x $UVMC_SYNC_ARGS $extraVistaArgs &"
+else
+    rm -f $runScript
+    echo "#XL_TLM_ENABLE_IPC_SNOOPING=$XL_TLM_ENABLE_IPC_SNOOPING"    >> $runScript
+    echo "#!/bin/bash"                                  >> $runScript
+    echo ""                                             >> $runScript
+    echo "echo Starting Vista in $sleepSec seconds..."  >> $runScript
+    echo "sleep $sleepSec "                             >> $runScript
+    echo cmd="\"./run.x $UVMC_SYNC_ARGS $extraVistaArgs 2>&1 | tee $pathBench/transcript_vista\"" >> $runScript
+    echo "echo \$cmd"                                   >> $runScript
+    echo "eval \$cmd"                                   >> $runScript
+    chmod +x $runScript
+    rcmd "xterm -geometry 200x50+0+0 -fg black -bg 'Antique White' -hold -e $runScript &"
+fi
+
+#######################################################
+
+

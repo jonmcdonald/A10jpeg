@@ -1,0 +1,58 @@
+#!/bin/bash
+
+##########################################
+# Script to invoke vista
+#------------------------------------
+#  * start vista in a subshell
+#  * look for vista template models
+#  * pass arguments to Vista (e.g. -m32)
+##########################################
+
+#########################################################
+### Design Specific startup args, env variables here  ###
+#########################################################
+
+# Allow Virtual Edition to see HW registers (also in vista simulate software tab)
+export V2_VP_PLUS=1
+# Allow easy switch from paused Vista to waiting Virtual Edition (go to next software instruction) 
+# (also in vista simulate software tab)
+export V2_IO_DEBUG_ENABLED=1
+
+# MESA (obsolete?)
+#export VP_GENERATE_MESA_DATABASE_CSV=1
+
+#args="-m32 $*"
+args="$*"
+
+###########################
+### Code to Start Vista ###
+###########################
+
+cmd=""
+stat=0
+lst=`ls */add_template.tcl 2>/dev/null`
+
+if [ ! -z "$lst" ]; then
+    for x in $lst; do 
+        # filter out template directories ending in ".orig", etc.
+        echo $x | grep -q '\.orig/'
+        status=$?
+        echo $x | grep -q '\.no/'
+        status=$(($status * $?))
+        if [ $status != 0 ]; then
+            cmd="$cmd source $x;"; 
+        fi
+    done
+    echo "$0: Found add_template file(s) to source"
+    echo vista_model_builder -c "$cmd"
+    vista_model_builder -c "$cmd" >/dev/null
+    stat=$?
+fi
+if [ $stat == 0 ]; then 
+    cmd="(vista $args &)"
+    echo "$cmd"
+    eval $cmd
+else 
+    echo "ERROR: $0: not invoking Vista"
+fi
+

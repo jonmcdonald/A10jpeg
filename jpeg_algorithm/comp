@@ -1,0 +1,2 @@
+
+g++ -o jpeg.x bitstream.cpp bmp.cpp dct.cpp huff.cpp jpeg.cpp main.cpp -I catapult_include

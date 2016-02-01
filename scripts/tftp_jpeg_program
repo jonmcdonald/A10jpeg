@@ -1,0 +1,20 @@
+#
+
+tftp localhost 2169 <<HERE
+binary
+verbose
+put codebench/linux_jpeg_wks/jpeg_program/Debug/jpeg_program jpeg_program
+HERE
+
+echo ""
+echo ""
+echo " ./jpeg_load"
+echo " /usr/bin/gdbserver 0.0.0.0:22 ./jpeg_program true_256x64.bmp  f.jpg"
+echo ""
+echo " ./jpeg_load"
+echo " ./jpeg_program true_256x64.bmp  f.jpg"
+echo ""
+
+
+#put ../Building_Linux/build/Linux_Build_resources/jpeg_driver/jpeg.ko jpeg.ko
+#put image_data/true_256x64.bmp true_256x64.bmp

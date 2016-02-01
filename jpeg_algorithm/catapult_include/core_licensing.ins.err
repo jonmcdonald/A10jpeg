@@ -1,0 +1,85 @@
+###########################################################################
+#  core_licensing.ins.err
+#
+#  core_licensing.ins.err is the string (text) registry for Mentor 
+#  Licensing Software.
+#
+#--------------------------------------------------------------------
+#  How to build the string registry table of errors:
+#
+#    $ .../build_registry core core_licensing.ins.err
+#    Result will be in core.xstring.tab
+#--------------------------------------------------------------------
+#   Format is :
+#
+#   subsystem   <Subsys_code>  <'Subsys_name'>
+#      module      <Mod_code>   <'Mod_name'>
+#         submodule   <Subm_code>  <'Subm_name'>
+#              <keyword>  <code>  <'string'>
+#              <keyword>  <code>  <'string'>
+#              <keyword>  <code>  <'string'>
+#              <keyword>  <code>  <'string'>
+#
+#   Where <keyword> is one of: error, fail, warning, note or plain.
+#---------------------------------------------------------------------
+#
+#subsystem  7D 'Core'
+#   module    09 'Licensing'
+#####################################################################################################################################################
+      submodule 01 'MGLS_init'
+         fail     01  '%1s\n//  Could not start MGLS asynchronous license process'                           #! CORE_MGLS__PROBLEM_STARTIN_CHILD
+         error    02  '%1s\n//  Do not know where MGLS home is.  Set MGLS_HOME or MGC_HOME environment variable'     #! CORE_MGLS__NO_MGLS_HOME_VALUE
+         fail     03  '%1s\n//  Contact Mentor Graphics Order Management for required falconfw_s license'    #! CORE_MGLS__NO_FALCONFW_LICENSE
+         fail     04  '%1s\n//  Packaging Information File is corrupt or invalid'                            #! CORE_MGLS__PKGINFOFILE_CORRUPT
+         error    05  '%1s\n//  Server communication difficulties'                                           #! CORE_MGLS_SVR_COMM_FAILURE
+         error    06  '%1s\n//  License file problem'                                                        #! CORE_MGLS_LICENSE_FILE_PROBLEM
+         warning  81  '%1s\n//  Could not %2s attribute %3s'                                                 #! CORE_MGLS__UNKNOWN_ATTRIBUTE
+         warning  82  '%1s\n//  %2s %3s Error while trying to set Location Of Use'                           #! CORE_MGLS__ERROR_IN_SET_LOU
+         warning  83  '%1s\n//  The package information file is not found.'                                   #! CORE_MGLS__PKGINFOFILE_NOT_FOUND
+
+      submodule 02 'MGLS_run'
+         fail     01  '%1s\n//  While doing %2s %3s malloc failed to allocate enough memory'                 #! CORE_MGLS__MALLOC_FAILURE
+         fail     02  '%1s\n//  Persistent licensing problem'                                                #! CORE_MGLS__PERSISTENT_LIC_PROBLEM
+         fail     03  '%1s\n//  License request for %2s feature failed'                                      #! CORE_MGLS__LICENSE_REQUEST_FAILED
+         error    04  '%1s\n//  Requesting higher than version %2s license for %3s feature failed'           #! CORE_MGLS__INVALID_LICENSE_VERSION
+         fail     05  '%1s\n//  A FATAL CS ERROR for %2s feature detected'                                   #! CORE_MGLS__SUBVERSION_DETECTED
+         fail     06  '%1s\n//  Generic licensing failure'                                                   #! CORE_MGLS__SOMESORT_OF_FAILURE
+         error    07  '%1s\n//  Licensing system communication failure'                                      #! CORE_MGLS__COMM_FAILURE
+         fail     08  '%1s\n//  FLEXlm licensing system failure'                                             #! CORE_MGLS_FLEXLM_FAILURE
+         fail     09  '%1s\n//  No license to satisfy %2s, examine license file and MGLS_LICENSE_SOURCE if set'  #! CORE_MGLS_NO_LICENSE_SOURCE
+         fail     0a  '%1s\n//  License server does not support this feature (%2s)'  #! CORE_MGLS_no_license_at_server
+         fail     0b  '%1s\n//  License for feature %2s not valid for this hostid.'  #! CORE_MGLS_invalid_hostid
+         fail     20  '%1s\n//  FLEXlm version of the vendor daemon is too old: %2s.'  #! CORE_MGLS_flexlm_server_too_old
+         fail     21  '%1s\n//  All licenses for feature %2s are in use.'  #! CORE_MGLS_maxusers
+         fail     22  '%1s\n//  Not enough licenses for feature %2s.'  #! CORE_MGLS_some_ok
+         fail     23  '%1s\n//  Free failed transactions first.'  #! CORE_MGLS_free_bad_transids
+         fail     24  '%1s\n//  License request denied because of MGLS include/exclude lists.'  #! CORE_MGLS_license_excluded
+
+      submodule 03 'MGLS_note'
+         note     81  '%1s\n//  All %2s licenses are in use.  Request entered in all possible queues'        #! CORE_MGLS__WAITING_IN_QUEUE
+         note     82  '%1s\n//  No %2s license is available yet.  Will retry in %3s seconds'                 #! CORE_MGLS__CHECKING_QUEUE_STATUS
+         note     83  '%1s\n//  Lost Server/Client connection for %2s, attempt #%3s in progress'             #! CORE_MGLS__RECONNECT_IN_PROGRESS
+         note     84  '%1s\n//  Reconnected to server for %2s feature, after %2s retries'                    #! CORE_MGLS__RECONNECT_DONE
+         note     85  '%1s\n//  Waiting for licensing system to respond...'                                  #! CORE_MGLS__WAITING_FOR_RESPONSE
+
+      submodule 04 'MGLS_warn'
+         warning  81  '%1s\n//  Unknown transaction id of %2s ignored'                                       #! CORE_MGLS__TRANS_ID_NOT_FOUND
+         warning  82  '%1s\n//  %2s license will expire in %3s days...'                                      #! CORE_MGLS__EXP_WARNING_MSG
+         warning  83  '%1s\n//  Out of range %2s value changed to %3s'                                       #! CORE_MGLS__ATTR_OUT_OF_RANGE
+         warning  84  '%1s\n//  All %2s licenses are in use and queuing has been disabled'                   #! CORE_MGLS__QUEUE_NOT_REQUESTED
+         warning  85  '%1s\n//  Lost license for %2s...'                                                     #! CORE_MGLS_LOST_LICENSE
+         warning  86  '%1s\n//  Lost connection to the license server...'                                    #! CORE_MGLS_LOST_CONNECTION
+         warning  87  '%1s\n//  Generic licensing warning'                                                   #! CORE_MGLS__SOMESORT_OF_WARNING
+         warning  88  '%1s\n//  Will not override %2s environment variable.'                                 #! CORE_MGLS__WONT_OVERRIDE_ENV
+         warning  89  '%1s\n//  Releasing a license triggered a warning'                                     #! CORE_MGLS_CHECKIN_WARNING
+         warning  8a  '%1s\n//  FLEXlm licensing system warning'                                             #! CORE_MGLS_FLEXLM_WARNING
+         warning  8b  '%1s\n//  License name %2s not recognized'                                             #! CORE_MGLS_FLEXLM_WARNING
+         warning  8c  '%1s\n//  License id %2s not recognized'                                             #! CORE_MGLS_FLEXLM_WARNING
+         warning  8f  '%1s\n//  Error getting license information.'                                             #! CORE_MGLS_license_info_error
+         warning  90  '%1s\n//  Value outside range.'                                             #! CORE_MGLS_value_out_of_range
+         warning  91  '%1s\n//  Value must be less than or equal to %2s and greater than %3s.'                                             #! CORE_MGLS_values_out_of_range
+         warning  92  '%1s\n//  Cannot checkin more licenses than are checked out.'                                             #! CORE_MGLS_quantity_exceeds_checkedout
+         warning  93  '%1s\n//  Partial checkin of %2s licenses failed; all %3s licenses lost.'                                             #! CORE_MGLS_lost_licenses_at_freeq
+         warning  94  '%1s\n//  All licenses have been successfully checked in.'                                             #! CORE_MGLS_all_checked_in
+         warning  95  '%1s\n//  Application id must be for an atomic.'                                             #! CORE_MGLS_not_atomic_id
+

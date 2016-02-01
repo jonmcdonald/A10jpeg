@@ -1,0 +1,48 @@
+ProjectName Project
+Files {
+	 Sources {
+		{$PRJDIR/sc_main.cpp}
+	 } 
+	 {Public Headers} {} 
+	 Models {
+		{$PRJDIR/models/pl110.mb}
+		{$PRJDIR/models/axi_bus.mb}
+		{$PRJDIR/models/driver.mb}
+		{$PRJDIR/models/sram.mb}
+	 } 
+	 Schematics {} 
+	 Documentation {} 
+	 {Linked Binaries} {
+		{$PRJDIR/objdir/libvmodels.a}
+		{$PRJDIR/jpeg_algorithm/libjpeg.a}
+		{$PRJDIR/../common_hw_libs/h264/lt/h264dec/libguc_h264d.a}
+	 } 
+	 {Other Binaries} {} 
+	 {External Headers} {} 
+}
+Designs {{$PRJDIR/sc_main.cpp}}
+VirtualPrototypes vp_create.tcl
+Folders {
+	 Sources {*.c *.cpp *.cc} 
+	 {Public Headers} *.h* 
+	 models *.mb 
+	 Schematics {} 
+	 Documentation {*.txt *.doc} 
+	 {Linked Binaries} {*.o *.a *.so} 
+	 {Other Binaries} {*.exe *.x} 
+}
+IncludePaths {{$PRJDIR/schematics} {$PRJDIR/models}}
+GeneralCompilationOptions {-Wall -DWIDTH_CACHE_TRACE}
+AlwaysCompileInCPPMode 1
+LinkPackages {model_builder models_catalogue}
+ProjectLibraryType archive
+ProjectComponentsLibraryPath {$PRJDIR/$PRJFILE_BASENAME/interfaces}
+ProjectWorkingDirectory {$PRJDIR/$PRJFILE_BASENAME/build}
+HasTLMSupport 1
+CompiledWithTLMSupport 1
+IsUsePathVariables 1
+PlatformProvider {Mentor Graphics Corporation}
+PlatformName Cortex-A9_Dual-Core
+PlatformVersion 1.0
+ProjectReadOnly 0
+ProjectBuildMultiPlatform 0
