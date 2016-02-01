@@ -71,6 +71,7 @@ struct block64 {
 // ----------------------------------------------------------------------------------------------
 
 void pixelpipe(
+      bool                reset,                // Reset the huffman encoder
       ac_channel<uint2>   &blocktype,           // input  block type, Y, Cr, Cb
       ac_channel<rgb_t>   &rgb,                 // input  block
       ac_channel<codes_t> &codes );             // output huffman codes

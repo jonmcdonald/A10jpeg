@@ -44,7 +44,6 @@ driver_pv::driver_pv(sc_module_name module_name)
   : driver_pv_base(module_name) 
 {
     SC_THREAD(thread);
-    fp = fopen("driver_out.jpg", "wb");
 }      
 
 void driver_pv::thread()
@@ -75,51 +74,59 @@ void driver_pv::thread()
     }
 
     wait(20*clock);
-    
-    // init jpeg
-    master_write(JPEG_SRC , BMP_MEM);
-    master_write(JPEG_DEST, JPEG_MEM);
-  
-    // for fractal_96_216.bmp
-    width = 96;    // 14 bits, left side
-    height = 216;  // 13 bits, right side
-    w_h = ((width & 0x3FFF) << 13) | (height & 0x1FFF);
 
-    master_write(JPEG_W_H, w_h); 
-    master_write(JPEG_START, 0x1); 
-
-    wait(gotIrqEvent);
-
-    // acknowlege irq
-    master_write(JPEG_START, 0x0);
-   
-    wait(5*clock);
-    // check irq cleared
-    if (irq.read() != 0) {
-            error++;
-            cout <<" ERROR: irq not acknowledged"<<endl;
-    } else
-            cout <<" irq succussfully acknowledged"<<endl;
-
-    // check results
-    master_read(JPEG_OUT_LEN, outLength); 
-    cout <<" Reading JPEG results outLength= "<<dec<< outLength <<endl;
-    master_read(JPEG_MEM, rDataByte, outLength); 
-
-    // Save jpeg to file in addition to checking result
-    fwrite(rDataByte, 1, outLength, fp);
-
-    // check jpeg result against golden data
-    for (unsigned i=0; i<outLength; i++) 
+    for (int loop=0; loop<2; loop++) 
     {
-        if (rDataByte[i] != jpeg_result[i])  {
-            error++;
-            cout <<" ERROR: jpeg result check mismatch ("<<dec<< i <<") "<<hex<< (unsigned)rDataByte[i] <<" != "<< (unsigned)jpeg_result[i] <<endl;
-            if (error>20) {
-                cout <<" .... truncated subsequent errors";
-                break;
+        sprintf(msg,"driver_out_%d.jpg",loop);
+        fp = fopen(msg, "wb");
+        cout <<endl<<name()<<" @ "<<sc_time_stamp()<<" Starting image compression, loop "<< loop <<endl;
+        
+        // init jpeg
+        master_write(JPEG_SRC , BMP_MEM);
+        master_write(JPEG_DEST, JPEG_MEM);
+      
+        // for fractal_96_216.bmp
+        width = 96;    // 14 bits, left side
+        height = 216;  // 13 bits, right side
+        w_h = ((width & 0x3FFF) << 13) | (height & 0x1FFF);
+    
+        master_write(JPEG_W_H, w_h); 
+        master_write(JPEG_START, 0x1); 
+    
+        wait(gotIrqEvent);
+    
+        // acknowlege irq
+        master_write(JPEG_START, 0x0);
+       
+        wait(5*clock);
+        // check irq cleared
+        if (irq.read() != 0) {
+                error++;
+                cout <<" ERROR: irq not acknowledged"<<endl;
+        } else
+                cout <<" irq succussfully acknowledged"<<endl;
+    
+        // check results
+        master_read(JPEG_OUT_LEN, outLength); 
+        cout <<" Reading JPEG results outLength= "<<dec<< outLength <<endl;
+        master_read(JPEG_MEM, rDataByte, outLength); 
+    
+        // Save jpeg to file in addition to checking result
+        fwrite(rDataByte, 1, outLength, fp);
+    
+        // check jpeg result against golden data
+        for (unsigned i=0; i<outLength; i++) 
+        {
+            if (rDataByte[i] != jpeg_result[i])  {
+                error++;
+                cout <<" ERROR: jpeg result check mismatch ("<<dec<< i <<") "<<hex<< (unsigned)rDataByte[i] <<" != "<< (unsigned)jpeg_result[i] <<endl;
+                if (error>20) {
+                    cout <<" .... truncated subsequent errors";
+                    break;
+                }
             }
         }
+        fclose(fp);
     }
 
 

@@ -51,6 +51,7 @@ class driver_pv : public driver_pv_base {
 
   void thread();
 
+  char msg[64];
   sc_event gotIrqEvent;
   FILE * fp;
 

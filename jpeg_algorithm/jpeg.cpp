@@ -118,14 +118,21 @@ void quantize(
 // ---------------------------------------------------
 // Huffman encode
 void encode(
-            ac_channel<uint2>   &blocktype,                   // input  block type, Y, Cr, Cb
+            bool                reset,                    // set dc[3] to zero for a new compression
+            ac_channel<uint2>   &blocktype,               // input  block type, Y, Cr, Cb
             ac_channel<short>   &datai,                   // input  block - quantize output, huffman input
             ac_channel<uint6>   &last_non_zero_index,     // input  index of the last non-zero value in the input block
             ac_channel<codes_t> &codes )                  // output huffman codes
 {
   
   // previous dc coefficient values for the 3 picture elements from last block
-  static int dc[3] = {0, 0, 0};
+  static int dc[3];
+
+  // if reset called, just reset, then exit (must be called for start of new image)
+  if (reset == true) {
+      dc[0] = dc[1] = dc[2] = 0;
+      return;
+  }
 
   uint6  num_zeros = 0;
   bool   new_code;
@@ -146,12 +153,14 @@ void encode(
     if (i==0) {
       // ---------------------------------------------
       // Huffman encode the DC Coefficient
-      int dcval         = value;
-      int diff          = dcval - dc[type];
+      int dcval  = value;
+      int diff   = dcval - dc[type];
+      int dcTypeOld = dc[type];
       dc[type]   = dcval;
 
       huf_code = huffencode(huffcodes[LC][DC],diff);
       huf_size = huffencode(huffsizes[LC][DC],diff);
+
     } else {
       // ---------------------------------------------
       // Huffman encode the AC Coefficient
@@ -187,6 +196,7 @@ void encode(
 }
 
 void pixelpipe(
+               bool                reset,                // set huffman encode dc[3] to zero for a new compression
                ac_channel<uint2>   &blocktype,           // input  block type, Y, Cr, Cb
                ac_channel<rgb_t>   &rgb,                 // input  block
                ac_channel<codes_t> &codes )              // output huffman codes
@@ -197,10 +207,17 @@ void pixelpipe(
   static ac_channel<uint6>   last_non_zero_index;
   static ac_channel<uint2>   blocktype1;
   static ac_channel<uint2>   blocktype2;
+
+  // MBMB added reset
+  if (reset == true) {
+      encode(true,blocktype2, quantized, last_non_zero_index, codes);
+      return;
+  }
+
   
   // convert 8x8 RGB block to 8x8 YCbCr
   convert(blocktype, blocktype1, rgb, converted);
-          
+  
   // run 2D 8x8 DCT on the block
   dct(converted, transformed);
 
@@ -208,6 +225,7 @@ void pixelpipe(
   quantize(blocktype1, blocktype2, transformed, quantized, last_non_zero_index);
 
   // run-length and Huffman encode
-  encode(blocktype2, quantized, last_non_zero_index, codes);
+  encode(false,blocktype2, quantized, last_non_zero_index, codes);
+  
 }
 
