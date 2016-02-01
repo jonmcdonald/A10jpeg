@@ -94,7 +94,8 @@ class JPEG_ENCODER_pv : public JPEG_ENCODER_pv_base {
 
   mb::mb_fifo<unsigned> mbFifo;
   bool                  jpegRunning;
-  unsigned              imageReadIndex, imageWriteIndex;
+  unsigned long long    dmaReadAddr, dmaWriteAddr;
+  unsigned              imageWriteIndex;
   unsigned              width, height;
   unsigned              numBlocks;
   void thread();

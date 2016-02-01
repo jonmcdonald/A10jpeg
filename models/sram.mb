@@ -25,7 +25,7 @@ set_auto_parameter_default "slave_pipeline_length" 2 uint32 {}
 set_auto_parameter_default "slave_outstanding" 1 uint32 {}
 set_auto_parameter_default "slave_read_data_queue_size" 0 uint32 {}
 set_auto_parameter_default "slave_write_data_queue_size" 0 uint32 {}
-set_auto_parameter_default "size_in_bytes" 0x20000000 uint64 {}
+set_auto_parameter_default "size_in_bytes" 0x40000000 uint64 {}
 set_auto_parameter_default "endianness" target string {"host" "little" "big"}
 
 # === generics ===

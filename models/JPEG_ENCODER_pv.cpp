@@ -84,8 +84,8 @@ void JPEG_ENCODER_pv::thread()
         outputlength    = 0;
         outputCount     = 0;
         jpegRunning     = 1;
-        imageReadIndex  = 0;
-        imageWriteIndex = outputaddr;
+        dmaReadAddr  = 0;
+        dmaWriteAddr = outputaddr;
         width           = (input_w_h_size >> 13) & 0x3FFF; // 14 bits
         height          = input_w_h_size & 0x1FFF;         // 13 bits
         numBlocks       = (width*height+BLOCK_SIZE-1) / BLOCK_SIZE;
@@ -95,17 +95,13 @@ void JPEG_ENCODER_pv::thread()
         cout <<" write preamble width= "<< width <<" height= "<< height <<endl;
         fp.writepreamble(height, width);
         
-        cout <<" jpegResult Size after preamble = "<<dec<< fp.get_resultSize() <<endl;
-        if (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
-            // have enough data for DMA write burst
+        // DMA Burst out preamble
+        while (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
             for (int i=0; i<WRITE_BLOCK_SIZE; i++) {
                 imageWriteData[i] = fp.get_resultByte();
-                printf(" %02X",imageWriteData[i]);
             }
-
-            master_write(imageWriteIndex , imageWriteData, WRITE_BLOCK_SIZE);
-            cout <<" preamble dma burst imageWriteIndex = "<<hex<< imageWriteIndex <<endl;
-            imageWriteIndex += WRITE_BLOCK_SIZE;
+            master_write(dmaWriteAddr , imageWriteData, WRITE_BLOCK_SIZE);
+            dmaWriteAddr += WRITE_BLOCK_SIZE;
         }
 
         if (numBlocks != width*height/BLOCK_SIZE)
@@ -114,8 +110,8 @@ void JPEG_ENCODER_pv::thread()
         for (unsigned block=0; block<numBlocks; block++)
         {
             //cout <<name()<<" @ "<<sc_time_stamp()<<" processing block "<<dec<< block <<endl;
-            master_read(inputaddr+imageReadIndex, (char *)imageReadData, BLOCK_SIZE*4);
-            imageReadIndex += BLOCK_SIZE*4; // 4 bytes for each rgb pixel in the block
+            master_read(inputaddr+dmaReadAddr, (char *)imageReadData, BLOCK_SIZE*4);
+            dmaReadAddr += BLOCK_SIZE*4; // 4 bytes for each rgb pixel in the block
 
             for (int i=0; i<64; i++) {
                 rgb[i].r = (imageReadData[i] >> 16) & 0xFF;
@@ -129,8 +125,9 @@ void JPEG_ENCODER_pv::thread()
             {
 
                 blocktype.write(type);
-                for (int i=0; i<64; i++) 
+                for (int i=0; i<64; i++) {
                     rgbstream.write(rgb[i]);
+                }
             
                 pixelpipe(blocktype, rgbstream, hufstream);  // The JPEG algorithm
 
@@ -142,28 +139,35 @@ void JPEG_ENCODER_pv::thread()
                     fp.write(codes[k].size, codes[k].code);
                 }
             }
-            if (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
-                // have enough data for DMA write burst
-                for (int i=0; i<WRITE_BLOCK_SIZE; i++)
-                    imageWriteData[i] = fp.get_resultByte();
 
-                cout <<" dma burst imageWriteIndex = "<<hex<< imageWriteIndex <<endl;
-                master_write(imageWriteIndex , imageWriteData, WRITE_BLOCK_SIZE);
-                imageWriteIndex += WRITE_BLOCK_SIZE;
+            // DMA out data in bursts
+            while (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
+                for (int i=0; i<WRITE_BLOCK_SIZE; i++) {
+                    imageWriteData[i] = fp.get_resultByte();
+                    //printf(" %02X",imageWriteData[i]);
+                }
+                master_write(dmaWriteAddr , imageWriteData, WRITE_BLOCK_SIZE);
+                dmaWriteAddr += WRITE_BLOCK_SIZE;
             }
         }
         // write out trailing info for the jpeg
         fp.writepostscript();
 
-        // DMA remaining bytes
-        dmaWriteSize = fp.get_resultSize();
-        cout <<" last burst dmaWriteSize = "<<dec<< dmaWriteSize <<endl;
-        cout <<" dma burst imageWriteIndex = "<<hex<< imageWriteIndex <<endl;
-        if (dmaWriteSize > 0) {
-            for (unsigned i=0; i<dmaWriteSize; i++)
+        // probably not a full block available, but check
+        while (fp.get_resultSize() >= WRITE_BLOCK_SIZE) {
+            for (unsigned i=0; i<WRITE_BLOCK_SIZE; i++) {
                 imageWriteData[i] = fp.get_resultByte();
-            master_write(imageWriteIndex , imageWriteData, dmaWriteSize);
+            }    
+            master_write(dmaWriteAddr , imageWriteData, WRITE_BLOCK_SIZE);
+            dmaWriteAddr += WRITE_BLOCK_SIZE;
         }
+
+        // DMA remaining bytes
+        dmaWriteSize = fp.get_resultSize(); 
+        for (unsigned i=0; i<dmaWriteSize; i++) {
+            imageWriteData[i] = fp.get_resultByte();
+        }
+        master_write(dmaWriteAddr , imageWriteData, dmaWriteSize);
         
         jpegRunning   = 0;
         outputlength  = fp.get_outputlength();

@@ -32,6 +32,7 @@
 #include "stdio.h"
 #include "ac_channel.h"
 
+
 class bitstream {
   private:
 
@@ -51,25 +52,18 @@ class bitstream {
   void flush();
 
   // write bytes into the output stream
-  //inline void writebytes(const void * ptr, unsigned char bytestowrite) {
-  void writebytes(const void * ptr, unsigned char bytestowrite) {
+  inline void writebytes(const void * ptr, unsigned char bytestowrite) 
+  {
       char* bytePtr = (char*)ptr;
       unsigned char numBytes = bytestowrite;
 
-      //printf(" outbyte: ");
-      //for (unsigned i=0; i<bytestowrite; i++)
-      //    printf("i=%d %x",i, (bytePtr[i]&0xFF) );
-      //printf("\n");
-    
-    fwrite(ptr, bytestowrite, 1, fp);
-    outputlength += bytestowrite;
+      fwrite(ptr, bytestowrite, 1, fp);
+      outputlength += bytestowrite;
 
-    //  printf("bytestowrite= %d \n",bytestowrite);
-    // store output data for Vista model
-    for (unsigned char i=0; i<numBytes; i++) {
-        jpegResult.write( bytePtr[i] );
-    }
-
+      // store output data for Vista model
+      for (unsigned char i=0; i<numBytes; i++) {
+          jpegResult.write( (bytePtr[i] & 0xFF) );
+      }
   }
 
   // Writes a Start of Image Part
@@ -90,6 +84,7 @@ class bitstream {
   public:
 
   unsigned      get_outputlength() { return outputlength; }
+
   unsigned      get_resultSize()   { return jpegResult.size(); }
   unsigned char get_resultByte()   { return jpegResult.read(); }
 

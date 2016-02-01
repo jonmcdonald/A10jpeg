@@ -30,7 +30,7 @@ const unsigned JPEG_OUT_LEN = JPEG_BASE+0xC;
 const unsigned JPEG_START   = JPEG_BASE+0x14; // write 1 to start,  0 to clear irq
 
 const unsigned BMP_MEM      = 0x10000000;
-const unsigned JPEG_MEM     = 0x10010000;
+const unsigned JPEG_MEM     = 0x20000000;
 
 #include "driver_pv.h"
 #include <iostream>
@@ -49,7 +49,8 @@ driver_pv::driver_pv(sc_module_name module_name)
 
 void driver_pv::thread()
 {
-    unsigned* rData = new unsigned[0x8000];
+    unsigned* rData = new unsigned[sizeof(bmp_data)/4+64];
+    unsigned char* rDataByte = new unsigned char[sizeof(bmp_data)];
     int error = 0;
     unsigned outLength;
     unsigned width, height, w_h;
@@ -103,22 +104,22 @@ void driver_pv::thread()
     // check results
     master_read(JPEG_OUT_LEN, outLength); 
     cout <<" Reading JPEG results outLength= "<<dec<< outLength <<endl;
-    master_read(JPEG_MEM, (char *)rData, outLength); 
+    master_read(JPEG_MEM, rDataByte, outLength); 
 
-    for (unsigned i=0; i<outLength/4; i++) 
+    // Save jpeg to file in addition to checking result
+    fwrite(rData, 1, outLength, fp);
+
+    // check jpeg result against golden data
+    for (unsigned i=0; i<outLength; i++) 
     {
-        fwrite(&(rData[i]), 4, 1, fp);
-        //printf(" %02X",rData[i]);
-#if 0
-        if (rData[i] != jpeg_result[i]) {
+        if (rDataByte[i] != jpeg_result[i])  {
             error++;
-            cout <<" ERROR: jpeg result check mismatch ("<<dec<< i <<")"<<hex<< rData[i] <<" != "<< jpeg_result[i] <<endl;
-            if (i>20) {
+            cout <<" ERROR: jpeg result check mismatch ("<<dec<< i <<") "<<hex<< (unsigned)rDataByte[i] <<" != "<< (unsigned)jpeg_result[i] <<endl;
+            if (error>20) {
                 cout <<" .... truncated subsequent errors";
                 break;
             }
         }
-#endif
     }
 
 
