@@ -287,7 +287,6 @@ sc  sccom               : $(LINK_SCCOM)
 #----------------------------
 $(EXE): $(VISTA_ARCHIVE) $(SC_MAIN_OBJ) $(THIRD_PARTY_LIBS) 
 	$(CC) $(M32_CC) -o $(EXE) $(VISTA_FLAGS) $(SC_MAIN_OBJ) $(VISTA_ARCHIVE) $(THIRD_PARTY_LIBS) 2>&1 | c++filt
-	$(CC) $(M32_CC) -shared -o jpeg.so $(VISTA_FLAGS) $(SC_MAIN_OBJ) $(VISTA_ARCHIVE) $(THIRD_PARTY_LIBS) 2>&1 | c++filt
 
 # Note: USER_OBJS are added to archive
 $(VISTA_ARCHIVE): $(MB_OBJS) $(USER_OBJS) 
