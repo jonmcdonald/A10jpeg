@@ -82,8 +82,8 @@ void JPEG_ENCODER_pv::thread()
         outputlength    = 0;
         outputCount     = 0;
         jpegRunning     = 1;
-        dmaReadAddr  = 0;
-        dmaWriteAddr = outputaddr;
+        dmaReadAddr     = 0;
+        dmaWriteAddr    = outputaddr;
         width           = (input_w_h_size >> 13) & 0x3FFF; // 14 bits
         height          = input_w_h_size & 0x1FFF;         // 13 bits
         numBlocks       = (width*height+BLOCK_SIZE-1) / BLOCK_SIZE;
@@ -114,10 +114,14 @@ void JPEG_ENCODER_pv::thread()
         for (unsigned block=0; block<numBlocks; block++)
         {
             //cout <<name()<<" @ "<<sc_time_stamp()<<" processing block "<<dec<< block <<endl;
-            master_read(inputaddr+dmaReadAddr, (char *)imageReadData, BLOCK_SIZE*4);
+
+            // Read in Bursts of READ_BLOCK_SIZE 
+            for (int x=0; x<BLOCK_SIZE/READ_BLOCK_SIZE; x++) {
+                master_read(inputaddr+dmaReadAddr+READ_BLOCK_SIZE*x*4, (char *) &(imageReadData[x*READ_BLOCK_SIZE]), READ_BLOCK_SIZE*4);
+            }
             dmaReadAddr += BLOCK_SIZE*4; // 4 bytes for each rgb pixel in the block
 
-            for (int i=0; i<64; i++) {
+            for (int i=0; i<BLOCK_SIZE; i++) {
                 rgb[i].r = (imageReadData[i] >> 16) & 0xFF;
                 rgb[i].g = (imageReadData[i] >>  8) & 0xFF;
                 rgb[i].b = (imageReadData[i] >>  0) & 0xFF;
@@ -130,7 +134,7 @@ void JPEG_ENCODER_pv::thread()
 
                 blocktype.write(type);
                 //printf("BBB %d %d :",block,type);
-                for (int i=0; i<64; i++) {
+                for (int i=0; i<BLOCK_SIZE; i++) {
                     //printf(" %02X%02X%02X",rgb[i].r,rgb[i].g,rgb[i].b);
                     rgbstream.write(rgb[i]);
                 }
@@ -138,11 +142,11 @@ void JPEG_ENCODER_pv::thread()
             
                 pixelpipe(false,blocktype, rgbstream, hufstream);  // The JPEG algorithm
 
-                for (int i=0; i<64; i++) 
+                for (int i=0; i<BLOCK_SIZE; i++) 
                     codes[i] = hufstream.read();
             
                 // write out the bitstream
-                for (int k=0; k<64; k++) {
+                for (int k=0; k<BLOCK_SIZE; k++) {
                     m_bitstream.write(codes[k].size, codes[k].code);
                 }
             }

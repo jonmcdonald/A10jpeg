@@ -81,7 +81,7 @@ class JPEG_ENCODER_pv : public JPEG_ENCODER_pv_base {
   //----------------------------
 
   // JPEG process specific sub-image size, result write block burst size is arbitrary
-  enum { BLOCK_WIDTH=8, BLOCK_HEIGHT=8, BLOCK_SIZE=64, WRITE_BLOCK_SIZE=BLOCK_SIZE };
+  enum { BLOCK_WIDTH=8, BLOCK_HEIGHT=8, BLOCK_SIZE=64, WRITE_BLOCK_SIZE=BLOCK_SIZE, READ_BLOCK_SIZE=16 };
 
   rgb_t           rgb[BLOCK_SIZE];           // 8x8 RGB block (R:0, G:1, B:2)
   codes_t         codes[BLOCK_SIZE];         // array of Huffman codes
