@@ -1,4 +1,4 @@
-clock = 1 NS
+clock = 10 NS
 
 #tlm_timing_model = LT
 

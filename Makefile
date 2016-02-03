@@ -1,1 +1,559 @@
-Makefile_vista
+#
+# General Purpose Makefile for Vista Model Builder Files
+# 
+#    The first section below "User/Design Variables" should be customized by the user 
+#    for design specific information.  Some designs may also need customization in the
+#    "Compile flags, "stable" variables" Section.  
+#
+#    See help: or "make help" for target information (Vista and Questa builds)
+#    NOTE: The Makefile you see here was probably modified from its original version 
+#          to meet the requirements of a specific design!
+#    Variable Name Suffix: _VI are for VIsta only compile
+#                          _AQ are Archive Questa compile
+#                          _AQL are Archive Questa compile and Link
+#                          _SCCOM (or _SC) are vista_sccom Questa compile
+#
+#-------------------History--------------------------------------
+# MB: Feb 2013 Initial Release
+#     Mar 2013 Added MODELS_LIST capability, 64 bit support
+#     Mar 2013 Added "MARCH" for 32 bit build on 64 bit target
+#     May 2013 Fixed sed "/" issue for NIC301 support in mb: target
+#              strip leading "./" in vista.ini physical library path
+#     Nov 2014 Added systemC version option, warning for long 
+#              physical library paths in vista.ini (NEEDS FIX)
+#----------------------------------------------------------------
+##############################################
+# User/Design Variables
+##############################################
+
+PLAT_DIR1           =              # Use as base directory for MODELS_LIST_DIR, etc.
+MODELS_LIST_DIR     =              # Directories to find MODELS_LIST models in
+MODELS_LIST         =              # List of individual Vista Models
+
+MODELS_DIR          = models       # Directories of Vista Model Builder Models
+SCHEMATICS          = schematics   # Vista schematics
+
+SC_MAIN             = sc_main.cpp  
+SC_MAIN_FLAGS       = 
+PROJECT             = Project      # Vista Project (only used for db: and cleanall:)
+
+UVMC_VER            = 2.3
+   
+USER_CFLAGS         = -Wno-unused-label
+USERSRC_FILES       =   # User Source files
+USERSRC_DIRS        = jpeg_algorithm                   # directories of user source in addition to file paths
+USERINC             = jpeg_algorithm/catapult_include  # User include directories
+
+
+# Control compilation of Vista to include predictor and/or stimulus
+ifeq ($(strip $(USE_VISTA_STIMULUS)),1)
+    SC_MAIN_FLAGS += -DUSE_VISTA_STIMULUS=1
+    NO_VIVY := 0
+endif
+ifeq ($(strip $(USE_VISTA_PREDICTOR)),1)
+    SC_MAIN_FLAGS += -DUSE_VISTA_PREDICTOR=1
+    NO_VIVY := 0
+endif
+
+QUESTA_SC_WORK_LIB  =  # empty unless QUESTA_BENCH_PWD specified via make command line
+
+ifneq ($(strip $(NO_VIVY)),0)
+    # Vista Standalone
+    USER_CFLAGS        += 
+    USERSRC_FILES      +=   # User Source files
+    USERSRC_DIRS       +=   # directories of user source in addition to file paths
+    USERINC            +=   # User include directories
+    DEFAULT_TARGET     := exe
+
+else 
+    ifneq ($(strip $(USE_VISTA_IN_QUESTA)),)
+        # For Vista in Questa 
+	USER_CFLAGS        += -DUSE_VISTA_IN_QUESTA=1 
+	SC_MAIN_FLAGS      += -DUVMC_FABRICSERVER_SRC=$(UVMC_FABRICSERVER_SRC:%.cpp=%.h)
+        USERSRC_FILES      += $(XL_VIP_HOME)/shared/xl_uvmc/uvmc-$(UVMC_VER)/src/connect/sc/uvmc.cpp $(UVMC_HVL_FILES)
+        USERSRC_DIRS       += 
+        USERINC            += $(QUESTA_HOME)/include $(XL_VIP_HOME)/shared/xl_uvmc/uvmc-$(UVMC_VER)/src/connect/sc $(XL_VIP_HOME)/lib 
+        DEFAULT_TARGET     := archive_questa_link
+	ifneq ($(strip $(QUESTA_BENCH_WORK)),)
+	    QUESTA_SC_WORK_LIB  = -lib $(QUESTA_BENCH_WORK)
+	    # Note: Don't know questa gcc version, but for now same as XL version
+	    QUESTA_GCC_VER      = $(XL_GCC_VER)
+	    FABRICSERVER_DEPEND = $(QUESTA_BENCH_WORK)/_sc/linux_$(MACH64_PREF)gcc-$(QUESTA_GCC_VER)/FabricServer.o
+	endif
+
+    else
+        # For Dual process Vista+Questa/Veloce
+        USER_CFLAGS        += -DXL_TLM_REMOTE_CLIENT  # needed for Vivy blocks and sc_main
+        USERSRC_FILES      += 
+        USERSRC_DIRS       += 
+        USERINC            += $(QUESTA_HOME)/include $(XL_VIP_HOME)/shared/xl_uvmc/xl-uvmc-$(UVMC_VER)/src/connect/sc
+
+        VIP_OPEN_KIT        = $(XL_VIP_HOME)/lib/lib_remote_sysc/$(XL_BUILD_PLATFORM)/vista/xl_vip_open_kit.so \
+        		      $(XL_VIP_HOME)/lib/lib_remote_sysc/$(XL_BUILD_PLATFORM)/vista/xl_vip_open_kit_extras.so \
+        		      $(XL_VIP_HOME)/lib/lib_remote_sysc/$(XL_BUILD_PLATFORM)/vista/xl_vip_open_kit_stubs.so 
+
+        XL_UVMC             = $(XL_VIP_HOME)/shared/xl_uvmc/xl-uvmc-$(UVMC_VER)/lib/vista/client/$(XL_BUILD_PLATFORM)/uvmc.so \
+        		      $(XL_VIP_HOME)/shared/xl_uvmc/xl-uvmc-$(UVMC_VER)/lib/vista/client/$(XL_BUILD_PLATFORM)/uvmc_tlm_fabric.so \
+        		      $(XL_VIP_HOME)/shared/xl_uvmc/xl-uvmc-$(UVMC_VER)/lib/vista/client/$(XL_BUILD_PLATFORM)/uvmc_stubs.so
+
+        THIRD_PARTY_LIBS    = $(XL_UVMC)
+        USER_VISTA_FLAGS    = -sc-dynamic
+
+        DEFAULT_TARGET     := exe
+    endif
+endif
+
+
+# Specify default build (see help:)
+CREATE_VP           := 0 # Use vista_vp_c++ for virtual prototype creation
+CREATE_VP_WINDOWS   := 0 # Use vista_vp_cl  for windows virtual prototype creation (not working yet)
+#DEFAULT_TARGET      := exe
+#DEFAULT_TARGET      = archive
+#DEFAULT_TARGET      = archive_questa
+#DEFAULT_TARGET      = archive_questa_link
+#DEFAULT_TARGET      = sccom
+
+XL_GCC_VER         := 4.5.0   # Use to find objects in $XL_VIP_HOME
+GCC_VERSION        := 4.5.4   # Vista gcc version
+VISTA_SC_VER       := -sc23   # Use systemC 2.2 (-sc22 or blank), or systemC 2.3 (-sc23)
+
+# questa sccom builds can sometimes fail if done in parallel, use '-j 1' or:
+#.NOTPARALLEL
+
+###############################################
+### Compile flags, "stable" variables
+###############################################
+
+# strip white space
+GCC_VERSION        := $(strip $(GCC_VERSION))
+VISTA_SC_VER       := $(strip $(VISTA_SC_VER))
+XL_GCC_VER         := $(strip $(XL_GCC_VER))
+
+# for Hybrid overlay in Vista
+XL_GCC_SHORT        = $(shell echo $(XL_GCC_VER) | sed -e 's/\.//g' -e 's/.$$//')
+XL_BITS             = $(shell if [ `uname -m` == "x86_64" ]; then echo 64; else echo 32; fi)
+# build platform defaults to native 32 or 64 bit arch.
+XL_BUILD_PLATFORM  ?= linux$(XL_BITS)_el30_gnu$(XL_GCC_SHORT)
+
+ifeq ($(strip $(MARCH)),32)
+    M32_CC          = -m32
+    M32_SCCOM       = -32 -m32  # should just be -32 for sccom, but vista_sccom only recognizes -m32
+    MACH64_PREF     = 
+else
+    M32_CC          = 
+    M32_SCCOM       = 
+    MACH64_PREF     = $(shell /bin/uname -m | /bin/grep  'x86_64' | /bin/sed -e 's/x86_64/x86_64_/')
+endif
+
+VISTA_MODEL_BUILDER = 1     # 0=using models from Vista in UVM
+OPTIMIZE            = 0     # 0=no_optimize 1=optimize
+VISTA_GCCVER       := -gcc$(shell echo $(GCC_VERSION) | sed -e 's/\.//g' -e 's/\(.*\).$$/\1/')
+VISTACC_CFLAGS      = -Wall -fPIC 
+DEBUG               = -g 
+
+EXE                 = run.x
+OBJDIR              = objdir
+VISTA_ARCHIVE       = $(OBJDIR)/libvmodels.a
+AR                  = ar
+AR_ARGS             = rcs
+ifeq ($(strip $(CREATE_VP)),0)
+  CC                  = vista_c++ 
+else
+  ifeq ($(strip $(CREATE_VP_WINDOWS)),0)
+    CC                  = vista_vp_c++
+  else
+    # This is not tested/working
+    CC                  = vista_vp_cl
+    AR                  = vista_create_archive
+    AR_ARGS             = -cl
+  endif
+endif
+
+OPT_FLAGS           = -O3 
+#VISTA_FLAGS         = +model_builder +models_catalogue $(VISTA_SC_VER) $(VISTA_GCCVER) -sc-dynamic
+VISTA_FLAGS         = +model_builder +models_catalogue $(VISTA_SC_VER) $(VISTA_GCCVER) $(USER_VISTA_FLAGS)
+
+#QKERN_FLAGS_AQ      = -systemc-version mti -I$(QUESTA_HOME)/include/systemc -I$(QUESTA_HOME)/include
+QKERN_FLAGS_AQ      = -systemc-version mti  
+OBJDIR_AQ           = $(OBJDIR)_questa
+WORK_AQL            = work_aql
+SC_WORK_AQL         = $(WORK_AQL)/_sc/linux_$(MACH64_PREF)gcc-$(GCC_VERSION)
+LINK_AQL            = $(SC_WORK_AQL)/systemc.so
+VISTA_SC_VER_DIR   := $(patsubst -%,_%, $(VISTA_SC_VER))
+
+#SCCOM_FLAGS        += -suppress 6102       # suppress "object not debuggable" sccom messages 
+#SCCOM_FLAGS        += -incr                # -incr does not always seem to recompile when needed
+#SCCOM_FLAGS        += -DSC_INCLUDE_MTI_AC  # use only for ac datatypes
+SCCOM_FLAGS        += -suppress 6102 
+SCCOM_FLAGS        += $(USER_CFLAGS)
+SCCOM               = vista_sccom
+WORK_SCCOM          = work_sccom
+SC_WORK_SCCOM       = $(WORK_SCCOM)/_sc/linux_$(MACH64_PREF)gcc-$(GCC_VERSION)
+LINK_SCCOM          = $(SC_WORK_SCCOM)/systemc.so
+
+#=======================================
+# Calculated Variables
+#=======================================
+
+ifeq ($(strip $(OPTIMIZE)),1)
+  # Optimizing Compile Flags
+  CFLAGS    = $(OPT_FLAGS) $(USER_CFLAGS) $(VISTA_FLAGS) $(VISTACC_CFLAGS)
+else
+  # Debug flags
+  CFLAGS    = $(DEBUG) $(USER_CFLAGS) $(VISTA_FLAGS) $(VISTACC_CFLAGS)
+endif
+
+# try to find Vista if it's not set
+VISTA_ROOT         = $(patsubst %/bin/,%, $(dir $(shell which vista)))
+ifeq ($(strip $(MODEL_BUILDER_HOME)),)
+    MODEL_BUILDER_HOME = $(VISTA_ROOT)/papoulis
+endif
+
+PWD               = $(shell pwd)
+MBIT              = $(shell /bin/uname -m | /bin/sed -e 's/.*64/64/' | /bin/sed -e 's/.*[^6][^4]/32/')
+# Use T "thin archive" if ar version is 2.23 or greater
+THIN_AR           = $(shell ver=`$(AR) -V | grep "GNU ar " | sed -e 's:.* \([0-9]*\.[0-9]*\).*:\1:'`; if [ `expr "$$ver" '>=' 2.23` == 1 ]; then echo T; fi )
+VISTA_VERSION     = $(strip $(patsubst Vista,,$(shell vista -version)))
+INCDIR            = -I$(MODEL_BUILDER_HOME)/include/mb_include $(foreach incdir, $(SCHEMATICS) $(USERINC) $(USERSRC_DIRS) $(MODELS_DIR), -I$(incdir))  
+INCDIR           += -I$(VISTA_ROOT)/generic/tlm2.0.1/include
+ifeq ($(strip $(VISTA_MODEL_BUILDER)),1)
+    PAPOULIS_PROJECT  = vista_work/papoulis_project$(VISTA_VERSION)
+else
+    PAPOULIS_PROJECT  = 
+endif
+
+# no space allowed before commas "," in commands:  $(foreach item, item_list, command_using_$item)  $(patsubst find, replace, text_to_search)
+SC_MAIN_OBJ       = $(patsubst %.cpp, $(OBJDIR)/%.o, $(notdir $(SC_MAIN)))
+MB_OBJS           = $(foreach sdir, $(MODELS_DIR),  $(patsubst $(sdir)/%.cpp, $(OBJDIR)/$(sdir)/%.o, $(wildcard $(sdir)/*.cpp))  )
+# Don't look for MODELS_LIST_DIR/MODELS_LIST as path can contain "../../".  Instead use .vpath to find source.
+# Could look for source and create subdirectory of links to "../../"
+MB_OBJS           += $(foreach model,  $(MODELS_LIST), $(OBJDIR)/$(model)_model.o $(OBJDIR)/$(model)_pv.o $(OBJDIR)/$(model)_t.o)
+
+USER_DIR_OBJS     = $(foreach sdir, $(USERSRC_DIRS), $(patsubst $(sdir)/%.cpp, $(OBJDIR)/$(sdir)/%.o, $(wildcard $(sdir)/*.cpp))  )
+USER_FILE_OBJS    = $(patsubst %.cpp, $(OBJDIR)/%.o, $(USERSRC_FILES))
+USER_OBJS         = $(USER_DIR_OBJS) $(USER_FILE_OBJS)
+
+OBJDIR_TREE       = $(sort $(foreach file, $(USER_OBJS) $(MB_OBJS),  $(dir $(file)) ))
+DFILES            =  $(USER_OBJS:%.o=%.d) $(MB_OBJS:%.o=%.d)  $(SC_MAIN_OBJ:%.o=%.d) 
+
+# Variables for Questa Archive build
+VISTA_ARCHIVE_AQ  = $(VISTA_ARCHIVE:$(OBJDIR)%=$(OBJDIR_AQ)%)
+MB_OBJS_AQ        = $(MB_OBJS:$(OBJDIR)%=$(OBJDIR_AQ)%)
+USER_OBJS_AQ      = $(USER_OBJS:$(OBJDIR)%=$(OBJDIR_AQ)%)
+OBJDIR_TREE_AQ    = $(OBJDIR_TREE:$(OBJDIR)%=$(OBJDIR_AQ)%)
+DFILES_AQ         = $(USER_OBJS:$(OBJDIR)/%.o=$(OBJDIR_AQ)/%.d) $(MB_OBJS:$(OBJDIR)/%.o=$(OBJDIR_AQ)/%.d)  $(SC_MAIN_OBJ_AQL:%.o=%.d) 
+
+# Variables for Questa link
+SC_MAIN_OBJ_AQL   = $(SC_MAIN_OBJ:$(OBJDIR)%=$(SC_WORK_AQL)%)
+
+# Variables for $(SCCOM) build
+MB_OBJS_SCCOM     = $(patsubst %, $(SC_WORK_SCCOM)/%, $(notdir $(MB_OBJS)))
+USER_OBJS_SCCOM   = $(patsubst %, $(SC_WORK_SCCOM)/%, $(notdir $(USER_OBJS)))
+SC_MAIN_OBJ_SCCOM = $(patsubst %, $(SC_WORK_SCCOM)/%, $(notdir $(SC_MAIN_OBJ)))
+DFILES_SCCOM      = $(USER_OBJS_SCCOM:%.o=%.d) $(MB_OBJS_SCCOM:%.o=%.d)  $(SC_MAIN_OBJ_SCCOM:%.o=%.d) 
+
+# vpath for sccom and if MODELS_LIST_DIR is used
+VPATH             = $(sort $(MODELS_LIST_DIR) $(MODELS_DIR) $(USERSRC_DIRS) $(dir $(USERSRC_FILES)))
+
+SIM               = sim_runx
+PARAM_TXT         = parameters.txt
+TRANS_TRACE       = traces.tcl
+
+.SUFFIXES: .cpp .cc .o .x .h
+#=======================================
+# "User" builds
+#=======================================
+
+# build USERSRC_FILES, USERSRC_DIRS here
+
+#=====================================
+# Default Target
+#=====================================
+.PHONY: exe a archive aq archive_questa aql archive_questa_link sc sccom _$(DEFAULT_TARGET)_ 
+_$(DEFAULT_TARGET)_     : $(DEFAULT_TARGET) 
+
+exe                     : $(EXE)
+a   archive             : $(VISTA_ARCHIVE)
+aq  archive_questa      : $(VISTA_ARCHIVE_AQ)
+aql archive_questa_link : $(LINK_AQL)
+sc  sccom               : $(LINK_SCCOM)
+
+#######################################
+### Target Rules and Recipies
+#######################################
+    
+#----------------------------
+# Targets for Vista
+#----------------------------
+$(EXE): $(VISTA_ARCHIVE) $(SC_MAIN_OBJ) $(THIRD_PARTY_LIBS) 
+	$(CC) $(M32_CC) -o $(EXE) $(VISTA_FLAGS) $(SC_MAIN_OBJ) $(VISTA_ARCHIVE) $(THIRD_PARTY_LIBS) 2>&1 | c++filt
+
+# Note: USER_OBJS are added to archive
+$(VISTA_ARCHIVE): $(MB_OBJS) $(USER_OBJS) 
+	$(AR) $(AR_ARGS)$(THIN_AR) $@ $(subst //,/,$^)
+
+$(MB_OBJS) $(USER_OBJS): $(OBJDIR)/%.o : %.cpp | $(OBJDIR_TREE)
+	$(CC) $(M32_CC) $(CFLAGS) $(INCDIR) -c $< -o $@
+	@# Strip absolute pathname from local .cpp/.h in dependency files
+	@$(CC) -MM $(M32_CC) $(CFLAGS) $(INCDIR) -c $< | sed -e 's|^[^ ]*:|$@:|' -e 's|$(PWD)/||' > $(@:.o=.d)
+
+$(SC_MAIN_OBJ) : $(OBJDIR)/%.o : %.cpp | $(OBJDIR_TREE)
+	$(CC) $(M32_CC) $(CFLAGS) $(SC_MAIN_FLAGS) $(INCDIR) -c $< -o $@
+	@# Strip absolute pathname from local .cpp/.h in dependency files
+	@$(CC) -MM $(M32_CC) $(CFLAGS) $(SC_MAIN_FLAGS) $(INCDIR) -c $< | sed -e 's|^[^ ]*:|$@:|' -e 's|$(PWD)/||' > $(@:.o=.d)
+
+$(OBJDIR_TREE): | $(PAPOULIS_PROJECT)
+	mkdir -p $@
+
+#------------------------------------
+# Targets for VP (Virtual Prototype)
+#------------------------------------
+VP_SIMDIR       := dir_vp_sim_makefile
+VP_INSTALLDIR   := vp_install_makefile
+VP_TCL          := vp_makefile.tcl
+VP_EXE          := vp_makefile.exe
+
+$(VP_TCL):
+	@echo " Creating VP TCL script '$(VP_TCL)'"
+	@echo for_windows 0                 > $(VP_TCL)
+	@echo executable $(EXE)            >> $(VP_TCL)
+	@echo project $(PROJECT)           >> $(VP_TCL)
+	@echo top { \$$PRJDIR/$(SC_MAIN) } >> $(VP_TCL)
+	@echo use_executable               >> $(VP_TCL)
+	@echo generate $(VP_EXE)           >> $(VP_TCL)
+
+vp $(VP_EXE):  $(VP_TCL) $(EXE)
+	@if [ $(CC) != "vista_vp_c++" ]; then \
+	    echo "Makefile_vista: Compiler needs to be 'vista_vp_c++' for VP creation, check '\$$(CC)'"; \
+		exit 1; \
+	fi
+	vista_create_vp $(VP_TCL) $(M32_CC)
+	@# install the VP as well
+	rm -rf $(VP_INSTALLDIR)
+	$(VP_EXE) -install $(VP_INSTALLDIR)
+
+vp_sim:  $(VP_INSTALLDIR)/run.exe
+	@echo "Simulate VP"
+	./$(VP_INSTALLDIR)/run.exe -simdir $(VP_SIMDIR) -vp-trace-power -vp-trace-sockets -vp-trace-cache
+	@echo "Create Analysis database from VP simulation"
+	./$(VP_INSTALLDIR)/prepare_analysis_database.exe -simdir $(VP_SIMDIR)
+	@echo "Open analysis window from VP simulation"
+	./$(VP_INSTALLDIR)/vp_analysis.exe -simdir $(VP_SIMDIR)
+
+vp_clean:
+	rm -rf $(VP_SIMDIR) $(VP_INSTALLDIR)
+	rm -f  $(VP_EXE)
+	rm -f  $(VP_TCL)
+
+#----------------------------
+# Targets for Archive Questa 
+#----------------------------
+$(VISTA_ARCHIVE_AQ): $(MB_OBJS_AQ) $(USER_OBJS_AQ) 
+	$(AR) $(AR_ARGS)$(THIN_AR) $@ $(subst //,/,$^)
+
+vpath %.cpp $(VPATH)
+$(MB_OBJS_AQ) $(USER_OBJS_AQ): $(OBJDIR_AQ)/%.o : %.cpp | $(OBJDIR_TREE_AQ)
+	$(CC) $(M32_CC) $(CFLAGS) $(QKERN_FLAGS_AQ) $(INCDIR) -c $< -o $@ 
+	@# Strip absolute pathname from local .cpp/.h in dependency files
+	@$(CC) -MM $(M32_CC) $(CFLAGS) $(INCDIR) -c $< | sed -e 's|^[^ ]*:|$@:|' -e 's|$(PWD)/||' > $(@:.o=.d)
+
+$(OBJDIR_TREE_AQ): | $(PAPOULIS_PROJECT)
+	mkdir -p $@
+
+#--------------------------------------------------------
+# Targets for Archive Questa Link (for Questa simulation)
+#--------------------------------------------------------
+$(LINK_AQL): $(SC_MAIN_OBJ_AQL) $(VISTA_ARCHIVE_AQ) $(THIRD_PARTY_LIBS) $(FABRICSERVER_DEPEND)
+	$(SCCOM) $(M32_SCCOM) -work $(WORK_AQL) -link $(QUESTA_SC_WORK_LIB) $(SCCOM_FLAGS:-incr=) $(VISTA_FLAGS) $(VISTA_ARCHIVE_AQ) $(THIRD_PARTY_LIBS) 
+
+$(SC_MAIN_OBJ_AQL): $(SC_MAIN) | $(WORK_AQL)/_info
+	$(SCCOM) $(M32_SCCOM) -work $(WORK_AQL) $(SC_MAIN_FLAGS) $(SCCOM_FLAGS) $(VISTA_FLAGS) $(INCDIR) -c $< 
+	@# temp hack; questa 10.4 uses "_sc22" rather than "_sc"
+	@#if [ -r $(WORK_AQL)/_sc22 ]; then if [ ! -r _sc ]; then ln -s _sc22 $(WORK_AQL)/_sc; fi; fi
+	$(CC) -MM $(M32_CC) $(SC_MAIN_FLAGS) $(VISTA_FLAGS) $(INCDIR) -c $< | sed -e 's|^[^ ]*:|$@:|' -e 's|$(PWD)/||' > $(@:.o=.d)
+
+$(WORK_AQL)/_info: | $(PAPOULIS_PROJECT)
+	vlib $(WORK_AQL)
+
+#-----------------------------------------------
+# Targets to compile entire design with $(SCCOM)
+#-----------------------------------------------
+
+$(LINK_SCCOM): $(SC_MAIN_OBJ_SCCOM) $(MB_OBJS_SCCOM) $(USER_OBJS_SCCOM)  $(THIRD_PARTY_LIBS) 
+	$(SCCOM) $(M32_SCCOM) -work $(WORK_SCCOM) $(QUESTA_SC_WORK_LIB) -link  $(SCCOM_FLAGS:-incr=) $(VISTA_FLAGS) $(THIRD_PARTY_LIBS)
+
+$(SC_MAIN_OBJ_SCCOM): $(SC_MAIN) | $(WORK_SCCOM)/_info
+	$(SCCOM) $(M32_SCCOM) -work $(WORK_SCCOM) $(SC_MAIN_FLAGS) $(SCCOM_FLAGS) $(VISTA_FLAGS) $(INCDIR) -c $< 
+	@$(CC) -MM $(M32_CC) $(SC_MAIN_FLAGS) $(VISTA_FLAGS) $(INCDIR) -c $< | sed -e 's|^[^ ]*:|$@:|' -e 's|$(PWD)/||' > $(@:.o=.d)
+
+# vpath seems to be the only 'reasonable' method to find source files 
+# The target is work/_sc/linux_$(MACH64_PREF)gcc_$(GCC_VERSION)/*.o, having no correlation to source file location
+vpath %.cpp $(VPATH)
+$(MB_OBJS_SCCOM) $(USER_OBJS_SCCOM): $(SC_WORK_SCCOM)/%.o : %.cpp | $(WORK_SCCOM)/_info
+	$(SCCOM) $(M32_SCCOM) -work $(WORK_SCCOM) $(SCCOM_FLAGS) $(VISTA_FLAGS) $(INCDIR) -c $< 
+	@$(CC) -MM $(M32_CC) $(SC_MAIN_FLAGS) $(VISTA_FLAGS) $(INCDIR) -c $< | sed -e 's|^[^ ]*:|$@:|' -e 's|$(PWD)/||' > $(@:.o=.d)
+
+$(WORK_SCCOM)/_info: | $(PAPOULIS_PROJECT)
+	vlib $(WORK_SCCOM)
+
+#-----------------------------------------------
+# Misc targets
+#-----------------------------------------------
+
+# Build Vista as if in GUI (db=database for waveform, etc)
+db: $(VISTA_ARCHIVE) $(SC_MAIN_OBJ)
+	vista_build_project $(PROJECT)
+
+.PHONY: clean cleanall clean_all cleantop clean_vista_top
+cleantop clean_vista_top:
+	@# Recompile vista vivy blocks and sc_main.cpp to switch to/from USE_VISTA <-> USE_VISTA_IN_QUESTA
+	@# Only need to recompile sc_main.cpp to switch to/from Predictor <-> Stimulus 
+	@echo "Makefile_vista: Removing Vista sc_main.o, FabricSever.o files"
+	@echo "    This is to allow faster changes between vista_in_questa, dual process, vista stimulus, and vista predictor"
+	find work_aql       -name sc_main.[od]        -exec rm '{}' \; ;\
+	find objdir_questa  -name FabricServer\*.[od] -exec rm '{}' \; ;\
+	find objdir         -name sc_main.[od]        -exec rm '{}' \; ;
+
+clean:
+	rm -rf $(OBJDIR) $(OBJDIR_AQ) 
+	rm -f  $(EXE) 
+	rm -f  .runVista .xterm_pid
+	rm -rf $(WORK_SCCOM) $(WORK_AQL)
+	@if [ -r vista_work/lock ]; then echo "Not cleaning Vista directories, lock file detected"; else rm -rf vista_work sim $(PROJECT) $(SIM); fi
+	@# papoulis_project is created by run.x unless env. var PAPOULIS_PROJECT is set to vista_work/papoulis_project<version>
+	rm -f  vista_power_transcript visualhl.ini_save_* vista_modelsim.ini
+	rm -f  vsim.wlf transcript vish_stacktrace.vstf vsim_stacktrace.vstf tcl_stacktrace.txt vsim.dbg
+	rm -rf model_builder.ini
+	rm -rf $(WORK_SCCOM) $(WORK_AQL)
+	rm -f  driver_out_*.jpg
+
+cleanall clean_all: clean
+	rm -rf papoulis_project 
+	rm -rf vista_work sim $(PROJECT) $(SIM)
+
+
+##################################
+### Run/Simulate targets
+##################################
+
+sim: $(EXE) 
+	./run.x
+
+gui: $(EXE) $(TRANS_TRACE)
+	vista -sc22 -trace-delta-cycles -memory-profiling \
+		-event-debugging -with-cause -trace-all-sockets \
+		-params $(PARAM_TXT) -simdir $(SIM) -memory-profiling \
+		-exec $(EXE) -simscript $(TRANS_TRACE)
+
+sim_trace: $(EXE) $(TRANS_TRACE)
+	@# In GUI: simulation->open_simulation to view waveforms
+	vista -sc22 -trace-all-sockets -simscript $(TRANS_TRACE) -params $(PARAM_TXT) -simdir $(SIM)_batch \
+		-batch -exec $(EXE)
+
+pa: $(EXE)
+	vista_analysis sim
+
+$(TRANS_TRACE):
+	echo "#trace_transactions -name * -tree" > $(TRANS_TRACE)
+	echo "#trace -name * -tree" >> $(TRANS_TRACE)
+	echo "#trace -kind sc_object_attribute -name * -tree -unlimited" >> $(TRANS_TRACE)
+
+###################################
+### Model Builder / Papoulis Build
+###################################
+
+# Model Builder doesn't read vista.ini to get library map, do it manually...
+# Create a strings for logical and physical Vista TLM/Model Builder libraries.  
+# the first logical library in TLM_LOGICAL_LIBS corresponds to the first physical location in TLM_PHYSICAL_LIBS
+# Since there are no associative arrays in Makefile/bourne shell, this is the workaround.
+TLM_LOGICAL_LIBS  := $(shell list=`grep LibrariesMap vista.ini | sed -e 's/LibrariesMap//' -e 's/[{}]/ /g'`; \
+                     pp=0; for x in $$list ; do if [ $$pp -eq 0 ]; then echo $$x; pp=1; else pp=0; fi; done;)
+TLM_PHYSICAL_LIBS := $(shell list=`grep LibrariesMap vista.ini | sed -e 's/LibrariesMap//' -e 's/[{}]/ /g' -e 's:\./::g'`;\
+                     pp=1; for x in $$list ; do if [ $$pp -eq 0 ]; then echo $$x; pp=1; else pp=0; fi; done;)
+
+# For custom template models
+ADD_TEMPLATE_LST  = $(shell ls */add_template.tcl | grep -v '\.orig/' 2>/dev/null;)
+ADD_TEMPLATE_CMD  = $(shell cmd=""; for x in $(ADD_TEMPLATE_LST); do cmd="$$cmd source $$x;"; done; echo $$cmd;)
+
+# Run vista_model_builder (generates vista_work/papoulis_project<version> directory)
+# This is "generate code" for each Vista model in the GUI
+mb $(PAPOULIS_PROJECT): 
+	@#echo TLM_LOGICAL_LIBS = $(TLM_LOGICAL_LIBS)
+	@#echo TLM_PHYSICAL_LIBS = $(TLM_PHYSICAL_LIBS)
+	@# Use shell commands to extract logical and physical library names in order to 
+	@# run various vista_model_builder commands.  Be sure that we only process the TLM 
+	@# libraries specified by the $(MODELS_DIR) variable.
+	@# The $MB_COMMAND is a tcl script which is passed to vista_model_builder.  It has logical
+	@# and physical placeholders which are replaced for each TLM library which is processed.
+	@# -------------------------------------------------------------------------------------
+	@i=1;                                                                                \
+	if [ ! -z "$(ADD_TEMPLATE_CMD)" ]; then                                              \
+	    echo "Makefile_vista: Adding custom model templates: $(ADD_TEMPLATE_LST)";             \
+	    vista_model_builder -c "$(ADD_TEMPLATE_CMD)";                                    \
+	    if [ $$? != 0 ]; then echo "ERROR: Makefile_vista exiting"; exit 1; fi;                \
+	fi;                                                                                  \
+	for physical in $(TLM_PHYSICAL_LIBS) ; do                                            \
+	    process_model_dir=0;                                                             \
+        for mo in $(MODELS_DIR) ; do                                                     \
+            if [ $$mo == $$physical -a -e $$physical ] ; then process_model_dir=1; fi    \
+        done;                                                                            \
+        logical=`echo $(TLM_LOGICAL_LIBS) | awk '{print $$'$$i'}' `;                     \
+	    i=$$[$$i+1];                                                                     \
+                                                                                         \
+        if [ $$process_model_dir == 1 ]; then                                            \
+                                                                                         \
+	        echo "Running Vista_model_builder on TLM library $$logical -> $$physical";   \
+	        mbcommand="`echo $(MB_COMMAND) | sed -e s:__LOGICAL__:$$logical:g -e s:__PHYSICAL__:$$physical:g`"; \
+	        vista_model_builder -c "$$mbcommand";                                        \
+	        if [ $$? != 0 ]; then echo "ERROR: Makefile_vista exiting"; exit 1; fi;            \
+	#MBMB  Fix below gives false warning for Schematics dir.                              \
+	#else                                                                                 \
+	#    echo "Makefile_vista: logical to physical library mapping in vista.ini";               \
+	#    echo "          longer paths such as '../../models' are not supported";          \
+	#    echo "          Use link to make directory appear local";                        \
+        fi;                                                                              \
+	done;
+
+# Model Builder command template.  logical and physical TLM names are substituted 
+# and this command is then passed to "vista_model_builder" command
+MB_COMMAND = 'create_tlm_library __LOGICAL__ __PHYSICAL__;                             \
+              reload_tlm_library __LOGICAL__;                                          \
+                                                                                       \
+	          foreach mbFile [glob -directory __PHYSICAL__ -tails *.mb] {              \
+	              puts "=== GENERATING __LOGICAL__->__PHYSICAL__/$$mbFile ===";        \
+	              save_model -generate TLM/__LOGICAL__/[lindex [split \$$mbFile .] 0]; \
+              }'
+
+
+####################################################
+### Help
+####################################################
+.PHONY: help
+help:
+	@echo ""
+	@echo "    Build Targets:"
+	@echo "    -------------"
+	@echo "    exe        # build EXEcutable"
+	@echo "    vp         # build VP (must also set CREATE_VP=1, and rebuild)"
+	@echo "    a          # Archive only (for link in vista)"
+	@echo "    aq         # Archive for Questa"
+	@echo "    aql        # Archive and Link in Questa"
+	@echo "    sc         # Questa Sccom"
+	@echo ""
+	@echo "    mb         # regenerate Model Builder c++ files"
+	@echo ""
+	@echo "    sim        # simulation by running executable"
+	@echo "    gui        # simulation in Vista GUI"
+	@echo "    sim_trace  # simulation in batch mode"
+	@echo "    vp_sim     # simulate VP"
+	@echo "    pa         # Power Analysis of simulation"
+	@echo "    db         # Build Project.db debug database"
+	@echo ""
+	@echo "    clean     # remove compiled files"
+	@echo "    cleanall  # remove compiled files and Vista/Questa temp/work files"
+	@echo ""
+
+-include $(DFILES)
+-include $(DFILES_AQ)
+-include $(DFILES_SCCOM)
+

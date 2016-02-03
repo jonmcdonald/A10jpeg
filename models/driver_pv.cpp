@@ -86,9 +86,9 @@ void driver_pv::thread()
         master_write(JPEG_DEST, JPEG_MEM);
       
         // for fractal_96_216.bmp
-        width = 96;    // 14 bits, left side
-        height = 216;  // 13 bits, right side
-        w_h = ((width & 0x3FFF) << 13) | (height & 0x1FFF);
+        width = 96;    // 14 bits max, left side
+        height = 216;  // 13 bits max, right side
+        w_h = ((width & 0x3FFF) << 16) | (height & 0x1FFF);
     
         master_write(JPEG_W_H, w_h); 
         master_write(JPEG_START, 0x1); 

@@ -59,12 +59,14 @@ unsigned int JPEG_ENCODER_pv::cb_read_start() {
   
 // Write callback for start register.
 // The newValue has been already assigned to the start register.
-void JPEG_ENCODER_pv::cb_write_start(unsigned int newValue) {
+void JPEG_ENCODER_pv::cb_write_start(unsigned int newValue) 
+{
     if ((start &1) == 1) {
-        cout <<name()<<" @ "<<sc_time_stamp()<<" JPEG start bit written"<<endl;
+        //cout <<name()<<" @ "<<sc_time_stamp()<<" JPEG start bit written"<<endl;
         mbFifo.put(1);
     }
     else if ((start &1) == 0) {
+        //cout <<name()<<" @ "<<sc_time_stamp()<<" JPEG irq acknowledge written"<<endl;
         irq.write(0);
     }
 }
@@ -78,24 +80,22 @@ void JPEG_ENCODER_pv::thread()
     while (1) {
         mbFifo.peek(); // block/wait until start bit is written
 
-        cout <<name()<<" @ "<<sc_time_stamp()<<" Starting JPEG compression"<<endl;
         outputlength    = 0;
         outputCount     = 0;
         jpegRunning     = 1;
         dmaReadAddr     = 0;
         dmaWriteAddr    = outputaddr;
-        width           = (input_w_h_size >> 13) & 0x3FFF; // 14 bits
+        width           = (input_w_h_size >> 16) & 0x3FFF; // 14 bits
         height          = input_w_h_size & 0x1FFF;         // 13 bits
         numBlocks       = (width*height+BLOCK_SIZE-1) / BLOCK_SIZE;
         if (numBlocks != width*height/BLOCK_SIZE)
             cout <<name()<<" @ "<<sc_time_stamp()<<" ERROR: bmp width*height not a multiple of BLOCK_SIZE ("<< BLOCK_SIZE <<")"<<endl;
 
+        cout <<name()<<" @ "<<sc_time_stamp()<<" Starting JPEG compression input_w_h_size= "<<hex<< input_w_h_size <<" width= "<<dec<< width <<" height= "<< height <<endl;
         // reset the jpeg encoder
         pixelpipe(true,blocktype, rgbstream, hufstream);  // Does reset only
-        cout << " input_w_h_size= "<<hex<< input_w_h_size <<" width= "<<dec<< width <<" height= "<< height <<endl;
 
         // JPEG Preamble
-        cout <<" write preamble width= "<< width <<" height= "<< height <<endl;
         m_bitstream.writepreamble(height, width);
         
         // DMA Burst out preamble
@@ -125,12 +125,13 @@ void JPEG_ENCODER_pv::thread()
                 rgb[i].r = (imageReadData[i] >> 16) & 0xFF;
                 rgb[i].g = (imageReadData[i] >>  8) & 0xFF;
                 rgb[i].b = (imageReadData[i] >>  0) & 0xFF;
-                //printf(",0x00%02X%02X%02X\n",(unsigned)rgb[i].r, (unsigned)rgb[i].g, (unsigned)rgb[i].b);
+                //printf("rgbIn: ,0x00%02X%02X%02X\n",rgb[i].r, rgb[i].g, rgb[i].b);
             }
 
             // process same input data as Y, Cb and Cr blocks, one after the other
             for (int type = 0; type <= 2; type++) 
             {
+                //cout <<name()<<" @ "<<sc_time_stamp()<<" processing block "<<dec<< block <<" type "<< type <<endl;
 
                 blocktype.write(type);
                 //printf("BBB %d %d :",block,type);
@@ -193,7 +194,7 @@ void JPEG_ENCODER_pv::thread()
         
         jpegRunning   = 0;
         outputlength  = m_bitstream.get_outputlength();
-        //printf("outputlength = %d\n",m_bitstream.get_outputlength());
+        cout <<name()<<" @ "<<sc_time_stamp()<<" Final outputlength = "<<dec<< m_bitstream.get_outputlength() <<endl;
         irq.write(1);
         
         mbFifo.get();  // release Fifo, Done.
