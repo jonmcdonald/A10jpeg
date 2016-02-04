@@ -46,12 +46,42 @@ void bitstream::writebits() {
 }
 
 void bitstream::flush() {
-   if (bytebitcounter == 0) return;
-   while(bytebitcounter != 8) pushbit(1);
-   writebits();
-   if (outbyte == 0xFF) { outbyte = 0; writebits(); }
-   bytebitcounter = 0;
+
+    if (outbuffercount == 0) return;
+
+    bytebitcounter = outbuffercount;
+    uint3 flush_shift=8-bytebitcounter;
+    outbyte << flush_shift;
+    outbyte |= (0xFF >> bytebitcounter);
+
+    writebits();
+    if (outbyte == 0xFF) {
+        outbyte = 0; writebits();
+    }
+    bytebitcounter = 0;
 }
+
+void bitstream::flushbuffer() {
+        uint39 bits = outbuffer;
+
+        bits <<= (39 - outbuffercount);
+        outbyte = (bits>>31);
+        for (unsigned char i=0; i<8; i++)
+        {
+                writebits();
+                if (outbyte == 0xFF) {
+                        outbyte = 0;
+                }
+                else {
+                        bits<<=8;
+                        outbyte = (bits>>31);
+                outbuffercount = outbuffercount-8;
+                }
+                if (outbuffercount<8)
+                        break;
+        }
+}
+
 
 void bitstream::pushbit(unsigned char c) { // 1 or 0
    // first bit pushed will end up at MSB position
@@ -65,24 +95,13 @@ void bitstream::write(unsigned char numbits, unsigned int bits) {
 
    if (numbits>32)
       assert(numbits <= 32);
-
-   // move msb up to int boundary
-   bits <<= (32 - numbits);
-
-   for (unsigned char i = 0; i < numbits; i++) {
-      pushbit(bits >> 31);
-      if (bytebitcounter == 8) {
-         writebits();
-
-         // force 0xFF to not be interpreted as a marker if in middle of data
-         // by following it with a zero byte
-         if (outbyte == 0xFF) { outbyte = 0; writebits(); }
-
-         // reset the counter and the outbyte
-         outbyte = 0;
-         bytebitcounter = 0;
-      }
-      bits <<= 1;
+   if (numbits > 0) {
+       outbuffer <<= numbits;
+       outbuffer |= bits;
+       outbuffercount += numbits;
+       if (outbuffercount > 7) {
+           flushbuffer();
+       }
    }
 }
 
@@ -133,8 +152,6 @@ void bitstream::write_SOS() {
    writebytes(&huffmantablenumber, 1);
 
    // must leave 3 bytes which will be skipped
-   // MBMB update match SystemC version
-   //unsigned char zeros[3] = {0xFF,0xFF,0xFF};
    unsigned char zeros[3] = {0x00,0x3F,0x00};
    writebytes(&zeros, 3);
 }

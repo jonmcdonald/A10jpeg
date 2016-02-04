@@ -30,6 +30,7 @@
 #pragma once
 
 #include "stdio.h"
+#include "ac_int.h"
 #include "ac_channel.h"
 
 
@@ -40,6 +41,14 @@ class bitstream {
   FILE * fp;
   unsigned char outbyte;
   unsigned outputlength;
+
+  // new code:
+  uint21 bytewritecounter; //must hold up to 3*MAX_ROWS*MAX_COLUMNS
+  uint39 outbuffer;  //must hold up to 4 bytes + 7 bits
+  uint6 outbuffercount;  //count 0-39
+  void flushbuffer();
+  //------------
+
 
   ac_channel<unsigned char> jpegResult;
 
@@ -55,7 +64,6 @@ class bitstream {
   inline void writebytes(const void * ptr, unsigned char bytestowrite) 
   {
       char* bytePtr = (char*)ptr;
-      unsigned char numBytes = bytestowrite; // MBMB not needed?
 
       #ifdef WRITE_JPEG
           // Don't write jpeg file here, it is done outside of JPEG model
@@ -64,12 +72,9 @@ class bitstream {
       outputlength += bytestowrite;
 
       // store output data for Vista model
-      //printf("writebytes %d ",numBytes);
-      for (unsigned char i=0; i<numBytes; i++) {
+      for (unsigned char i=0; i<bytestowrite; i++) {
           jpegResult.write( (bytePtr[i] & 0xFF) );
-          //printf(" %02X",(bytePtr[i] & 0xFF));
       }
-      //printf("\n");
   }
 
   // Writes a Start of Image Part
