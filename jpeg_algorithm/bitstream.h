@@ -111,10 +111,10 @@ class bitstream {
   }
  
 #ifdef WRITE_JPEG
-  inline  bitstream(const char * filename) : bytebitcounter(0), outbyte(0), outputlength(0) { fp = fopen(filename, "wb"); }
+  inline  bitstream(const char * filename) : bytebitcounter(0), outbyte(0), outputlength(0), bytewritecounter(0), outbuffer(0), outbuffercount(0) { fp = fopen(filename, "wb"); }
   inline ~bitstream() { close(); }
 #else
-  inline  bitstream(const char * filename) : bytebitcounter(0), outbyte(0), outputlength(0) { }
+  inline  bitstream(const char * filename) : bytebitcounter(0), outbyte(0), outputlength(0), bytewritecounter(0), outbuffer(0), outbuffercount(0) { }
   inline ~bitstream() { }
 #endif
 };

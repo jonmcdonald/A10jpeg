@@ -155,7 +155,6 @@ void encode(
       // Huffman encode the DC Coefficient
       int dcval  = value;
       int diff   = dcval - dc[type];
-      int dcTypeOld = dc[type];
       dc[type]   = dcval;
 
       huf_code = huffencode(huffcodes[LC][DC],diff);
@@ -188,7 +187,7 @@ void encode(
       huf_size  = (new_code) ? huffencode(huffsizes[LC][AC],num_zeros,value) : 0;
       num_zeros = (new_code || (i>=huf_lnzi)) ? 0 : (int)num_zeros+1;
     }
-    
+
     //  huf_code : the code        (the bits)
     //  huf_size : the code length (the number of bits)
     codes.write(codes_t(huf_size, huf_code));

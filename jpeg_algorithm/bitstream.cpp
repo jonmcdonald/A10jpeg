@@ -305,5 +305,9 @@ void bitstream::writepostscript() {
    // make sure we are byte aligned
    flush();
    write_EOI();
+   // reset variables for subsequent run
+   bytewritecounter=0; 
+   outbuffer=0; 
+   outbuffercount=0;
 }
 
