@@ -26,3 +26,11 @@
 *.exe
 *.out
 *.app
+
+*.jpg
+*.merged
+*.orig
+run.x
+vista_work
+objdir
+model_builder.ini
