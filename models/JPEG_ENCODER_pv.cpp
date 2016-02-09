@@ -114,6 +114,7 @@ void JPEG_ENCODER_pv::thread()
         for (unsigned block=0; block<numBlocks; block++)
         {
             //cout <<name()<<" @ "<<sc_time_stamp()<<" processing block "<<dec<< block <<endl;
+            jpeg_delay = 1;
 
             // Read in Bursts of READ_BLOCK_SIZE 
             for (int x=0; x<BLOCK_SIZE/READ_BLOCK_SIZE; x++) {
@@ -151,7 +152,7 @@ void JPEG_ENCODER_pv::thread()
                     m_bitstream.write(codes[k].size, codes[k].code);
                 }
             }
-
+	    jpeg_delay = 0;
             // DMA out data in bursts
             while (m_bitstream.get_resultSize() >= WRITE_BLOCK_SIZE) {
                 //printf("block write %d :",block);

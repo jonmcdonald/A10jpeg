@@ -11,6 +11,7 @@ add_port "irq" /TLM/protocols/signal master 1 -bind_mode mandatory
 
 # === parameters ===
 add_parameter "voltage" 0.8 double {}
+add_parameter "PixelPipeDelay" 1000 uint32 {}
 
 # === auto parameters ===
 set_auto_parameter_default "clock" {10 ns} time {}
@@ -43,11 +44,7 @@ declare_register slave outputlength 0xC {} -rw_access r -width 32
 declare_register slave status 0x10 {} -rw_access r -is_trigger -width 32
 declare_register slave start 0x14 {} -rw_access r/w -is_trigger -width 32
 set_sync_all 0
-add_sequential_policy master.READ -cause slave.WRITE -latency 10 -sync 1 -power 0
-add_sequential_policy master.WRITE -cause master.READ -latency 200 -sync 0 -power 0 -disabled
-add_sequential_policy status.write -cause master.WRITE -latency 5 -sync 0 -power 0
-add_delay_policy slave 3 -latency 2 -sync 0 -power 0
-add_sequential_policy state_var.write -cause state_var.write -latency jpeg_delay -sync 0 -power 0
+add_sequential_policy jpeg_delay.write -cause master.READ -latency PixelPipeDelay -sync 0 -power 0
 state_power 0.1 -condition_pairs {state_var 0}
 state_power 100 -condition_pairs {state_var 1}
 set_leakage_power 0.0001
